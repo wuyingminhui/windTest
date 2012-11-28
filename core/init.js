@@ -1,7 +1,7 @@
 var FS = require('fs');
 var path = require('path');
-var Utils = require('./utils.js');
-
+var Utils = require('./libs/utils.js');
+var CONFIG = require( './config.json' );
 
 var webdriverNode = require('../node_modules/webdriverNode/lib/core/webdriverNode');
 var args = process.argv.splice(2);
@@ -10,8 +10,8 @@ var userScript = FS.readFileSync(targetFile, 'utf-8');
 var userScriptChunks = Utils.parser(userScript);
 
 //selenium server jar 位置
-var Selenium_Server = path.normalize(__dirname + '/../selenium.server/selenium-server-standalone-2.11.0.jar');
-var ChromeDriver = path.normalize('./selenium.server/chromedriver.exe');
+var Selenium_Server = path.resolve( __filename, CONFIG.SELENIUM_SERVER_JAR_PATH );
+var ChromeDriver = path.resolve( __filename, CONFIG.CHROME_DRIVER_PATH );
 
 //定义全局变量空间，用于存储一些跨区域变量
 var __Jas = {
