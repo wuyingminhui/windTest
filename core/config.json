@@ -1,0 +1,4 @@
+{
+    "CHROME_DRIVER_PATH": "./selenium.server/chromedriver",
+    "SELENIUM_SERVER_JAR_PATH": "'/../selenium.server/selenium-server-standalone-2.11.0.jar"
+}

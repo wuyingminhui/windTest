@@ -1,0 +1,11 @@
+{
+    "name": "windTestCore",
+    "description": "The nodeJS library for windTest framework",
+    "version": "0.0.1",
+    "author": "Neekey ni184775761@gmail.com",
+    "keywords": [ "windTest" ],
+    "main": "init.js",
+    "dependencies": {
+        "webdriverNode": "*"
+    }
+}
