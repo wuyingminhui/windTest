@@ -1,22 +1,8 @@
     __done = arguments[ 0 ];
-    __Jas = {
-        data: {
-            _data: '{{& dataStr}}',
-            get:function (attr) {
-                return this._data[ attr ];
-            },
-            set:function (attr, value) {
-                this._data[ attr ] = value
-            }
-        },
 
-        done: function( returnData ){
-                    console.log( 'before execute done! ' );
-            __done( returnData );
-        }
-    };
+    '{{& globalData}}';
 
-    '{{& librarys}}'
+    '{{& libs}}';
 
     '{{& userScript}}';
 
@@ -24,7 +10,7 @@
     var oldCallback = jasmineEnv.currentRunner().finishCallback;
     jasmineEnv.currentRunner().finishCallback = function () {
         oldCallback.apply(this, arguments);
-        __Jas.done({ __Jas: { data: __Jas.data._data, testResult: jasmine.getJSReport() } });
+        '{{& globalDataName}}'.done( jasmine.getJSReport() );
     };
 
     // Register reporters

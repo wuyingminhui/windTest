@@ -5,13 +5,20 @@ var FS = require('fs');
 var spawn = require('child_process').spawn;
 var Mustache = require('mustache');
 var assert = require('assert');
-
+var GlobalData = require( './global_data' );
 
 var _ = require('underscore');
 var NEW_LINE = '\r\n';
 
 module.exports = {
 
+    /**
+     * 合并一个文件和字符串
+     * @param str
+     * @param file
+     * @param mode append|prepend
+     * @return {String}
+     */
     addFileToString:function (str, file, mode) {
 
         mode = mode || 'append';
@@ -33,6 +40,13 @@ module.exports = {
         return result;
     },
 
+    /**
+     * 合并一个文件列表到字符串
+     * @param str
+     * @param files
+     * @param mode
+     * @return {String}
+     */
     addFilesToString:function (str, files, mode) {
 
         var self = this;
@@ -49,40 +63,73 @@ module.exports = {
         return result;
     },
 
+    /**
+     * 执行脚本
+     * @param {Object} obj.exeData
+     * @param {WebdriverNode} obj.client
+     * @param {GlobalData} [obj.globalData]
+     * @param {Number} [obj.index]
+     * @param {Function} obj.next
+     * @param {Array} [obj.libs]
+     */
+    scriptExec: function ( obj ) {
 
-    scriptExec:function (exeData, client, __Jas, index) {
-        var execScriptTPL = FS.readFileSync(__dirname + '/script_wrap.mustache', 'utf-8')
-            .replace(/'{{/g, '{{')
-            .replace(/}}'/g, '}}');
-        var libraryArray = [ __dirname + '/libs/jasmine-min.js', __dirname + '/libs/jasmine-jsreporter-min.js' ];
-        var libraryStr = this.addFilesToString('', libraryArray);
+        var exeData = obj.exeData;
+        var client = obj.client;
+        var globalData = obj.globalData || new GlobalData;
+        var index = typeof obj.index == 'undefined' ? 0 : obj.index;
+        var next = obj.next;
+        var libs = obj.libs;
 
-        index = typeof index == 'undefined' ? 0 : index;
+        // 获取脚本模板TPL
+        var execScriptTPL = FS.readFileSync( __dirname + '/script_wrap.mustache', 'utf-8' )
+            .replace( /'{{/g, '{{' )
+            .replace( /}}'/g, '}}' );
+        // 构造依赖的脚本
+        var libraryStr = this.addFilesToString( '', libs, 'append' );
+
+        // 如果已经执行完所有的chunk了，则说明脚本执行完毕了
+        // 结束session并将测试的结果返回
         if (index == exeData.length) {
-            client.end(function () {
-                FS.writeFileSync('./testResult.json', JSON.stringify(__Jas.testResult));
+            client.end(function(){
+                // 讲结果写入的一个文件中 todo 仅供测试，之后删掉
+                FS.writeFileSync('./testResult.json', globalData.sys( 'testResult' ) );
+                next( { testResult: globalData.sys( 'testResult' ) } );
             });
             return;
         }
 
+        // 需要执行的脚本chunk
         var exe = exeData[ index ];
+        // 需要前往的页面地址
         var url = exe.url;
+        // 需要执行的脚本字符串
         var str = exe.str;
-        var data = JSON.stringify(__Jas.data.toJSON());
+        // 用于设置全局对象的字符串
+        var globalDataString = globalData.toScriptString();
+        // 最终构造出来的运行脚本
         var execScript = Mustache.render(execScriptTPL, {
-            dataStr:data,
-            librarys:libraryStr,
-            userScript:str
+            globalData: globalDataString,
+            libs: libraryStr,
+            userScript: str
         });
 
-        client.protocol.url(url);
-        client.protocol.executeAsync(execScript, function (response) {
+        // 打开制定的页面
+        client.protocol.url( url );
+        // 执行脚本
+        client.protocol.executeAsync( execScript, function ( response ) {
 
-            var Jas = response.value.__Jas;
-            __Jas.data._data = Jas.data;
-            __Jas.testResult.push(Jas.testResult);
+            var responseData = response.value;
+            globalData.retrieve( responseData.data, responseData.sys );
 
-            module.exports.scriptExec(exeData, client, __Jas, index + 1);
+            module.exports.scriptExec({
+                exeData: exeData,
+                client: client,
+                globalData: globalData,
+                index: index + 1,
+                next: next,
+                libs: libs
+            });
         });
     },
 
@@ -109,9 +156,10 @@ module.exports = {
 
     /**
      * 执行操作系统命令
-     * @param command
+     * @param {String} command
+     * @param {Function} callback
      */
-    exec:function (command, callbak) {
+    exec:function (command, callback) {
 
         var cmd = spawn("cmd", command);
 
@@ -119,20 +167,20 @@ module.exports = {
         cmd.stdout.on("data", function (data) {
             console.log("------------------------------");
             console.log("stdout:" + data);
-            callbak && callbak({type:'INFO', data:data.toString()}, cmd );
+            callback && callback({type:'INFO', data:data.toString()}, cmd );
         });
 
         cmd.stderr.on("data", function (data) {
             console.log("------------------------------");
             console.log("stderr:" + data);
             console.log("------------------------------");
-            callbak && callbak({type:'ERROR', data:data.toString()}, cmd );
+            callback && callback({type:'ERROR', data:data.toString()}, cmd );
         });
 
         cmd.on("exit", function (code) {
             console.log("exited with code:" + code);
             console.log("------------------------------");
-            callbak && callbak({type:'END', data:code.toString()}, cmd );
+            callback && callback({type:'END', data:code.toString()}, cmd );
         });
     }
 };
