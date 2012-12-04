@@ -6,6 +6,8 @@
     "keywords": [ "windTest" ],
     "main": "init.js",
     "dependencies": {
-        "webdriverNode": "*"
+        "webdriverNode": "*",
+        "underscore": "*",
+        "uglify-js": "1.x"
     }
 }

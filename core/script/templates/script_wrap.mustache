@@ -8,7 +8,7 @@
 
     var jasmineEnv = jasmine.getEnv();
     var oldCallback = jasmineEnv.currentRunner().finishCallback;
-    jasmineEnv.currentRunner().finishCallback = function () {
+    jasmineEnv.currentRunner().finishCall back = function () {
         oldCallback.apply(this, arguments);
         '{{& globalDataName}}'.done( jasmine.getJSReport() );
     };

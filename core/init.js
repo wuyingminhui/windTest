@@ -3,7 +3,9 @@ var path = require('path');
 var ServerSetup = require( './server_setup' );
 var ScriptRunner = require( './script_runner' );
 
+// 获取命令行参数
 var args = process.argv.splice(2);
+//
 var targetFile = args[0];
 var userScript = FS.readFileSync(targetFile, 'utf-8');
 
