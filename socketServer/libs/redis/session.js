@@ -39,11 +39,8 @@ var Session = function( id, next ){
         if( err ){
             throw new err;
         }
-        else if( ifExist ){
-            throw new Error( 'Session ID: ' + id + ' 已经存在.' );
-        }
         else {
-            self._init( id, next );
+            self._init( id, ifExist, next );
         }
     });
 };
@@ -100,12 +97,14 @@ Session.prototype = {
      * @private
      */
 
-    _init: function( id, next ){
+    _init: function( id, ifExist, next ){
         this.sessionId = id;
         this.sessionKey = Session.sessionId( id );
         this.globalDataKey = this.sessionKey + ':globalData';
-        // 设置全局数据
-        Client.set( this.globalDataKey, JSON.stringify( {} ), next );
+        if( !ifExist ){
+            // 设置全局数据
+            Client.set( this.globalDataKey, JSON.stringify( {} ), next );
+        }
     },
 
 

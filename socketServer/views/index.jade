@@ -4,5 +4,27 @@ extends layout
 block content
     h1= title
     p Welcome to #{title}
+    div.command
+        h3 消息发送
+        label 事件类型
+            input.J_Type(type="text")
+        lable 消息
+            input.J_Msg(type="text")
+        button.J_Trigger 发送
+
+    div.test
+        h3 测试用例
+        label URL
+            input.J_TestURL(type="text")
+        label Browser
+            input.J_TestBrowser(type="text")
+        p 测试代码
+            textarea.J_TestCode
+        p
+            button.J_TestRun 测试
+
+    div.J_Response
+
     script(src="/javascripts/libs/socket.io/socket.io.js")
+    script(src="/javascripts/libs/jquery-1.8.3-min.js")
     script(src="/javascripts/index.js")

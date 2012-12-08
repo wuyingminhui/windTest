@@ -1,12 +1,13 @@
 {
-  "name": "application-name",
-  "version": "0.0.1",
-  "scripts": {
-    "start": "node app"
-  },
-  "dependencies": {
-    "express": "3.0.3",
-    "jade": "*",
-    "redis": "*"
-  }
+    "name": "application-name",
+    "version": "0.0.1",
+    "scripts": {
+        "start": "node app"
+    },
+    "dependencies": {
+        "underscore": "*",
+        "express": "3.0.3",
+        "jade": "*",
+        "redis": "*"
+    }
 }

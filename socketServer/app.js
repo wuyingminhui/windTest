@@ -9,6 +9,8 @@ var express = require('express')
   , path = require('path')
   , socketIo = require('socket.io');
 
+var Socket = require( './libs/socket' );
+
 var app = express();
 
 app.configure(function(){
@@ -40,8 +42,5 @@ var server = http.createServer(app).listen(app.get('port'), function(){
 var io = socketIo.listen( server );
 
 io.sockets.on('connection', function (socket) {
-    socket.emit('news', { hello: 'world' });
-    socket.on('my other event', function (data) {
-        console.log(data);
-    });
+    Socket.handle( socket );
 });
