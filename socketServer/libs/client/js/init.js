@@ -4,7 +4,7 @@
  * @date 12-12-5
  */
 
-function init( WindTest, S_DATA, S_DONE ){
+function init(){
 
     // 初始化数据对象
     // 将server的全局数据同步的client，
