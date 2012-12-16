@@ -125,7 +125,10 @@ describe('Session Test', function(){
 
             // #getAllWinIds()
             sessionIst.getAllWinIds(function( err, ret ){
-                assert.deepEqual( ret, winList );
+                assert.equal( winList.length, ret.length );
+                for( var i = 0; i < winList.length; i++ ){
+                    assert( true, winList.indexOf( ret[ i ]) >= 0 );
+                }
 
                 // #getAllWins()
                 sessionIst.getAllWins(function( err, wins ){
@@ -149,7 +152,6 @@ describe('Session Test', function(){
         var winInfo = {
             parentId: 56
         };
-        var parentId = 56;
         sessionIst.addWin( newWinId, winInfo, function( err ){
 
             sessionIst.getWin( newWinId, function( err, win ){
@@ -171,9 +173,7 @@ describe('Session Test', function(){
 
     it( '#destroy', function(done){
         sessionIst.destroy(function(){
-
             done();
         });
-
     });
 });
