@@ -12,7 +12,8 @@ $(document).ready(function(){
     var TESTCode = $( '.J_TestCode' );
     var TestTrigger = $( '.J_TestRun' );
 
-    IOTrigger.bind( 'click', function(){
+    IOTrigger.bind( 'click', function( event ){
+        event.preventDefault();
         var type = IOType.val();
         var msg = IOMsg.val();
 
@@ -23,10 +24,11 @@ $(document).ready(function(){
         }
     });
 
-    TestTrigger.bind( 'click', function(){
+    TestTrigger.bind( 'click', function( event ){
+        event.preventDefault();
         var testObj = {
             url: TESTURL.val(),
-            browser: TESTBrowser.val(),
+            browserName: TESTBrowser.val(),
             code: TESTCode.val()
         };
 

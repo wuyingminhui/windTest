@@ -16,7 +16,6 @@ module.exports = {
      */
 
     newTest: function( testInfo, next ){
-
         TestDriver.newTest( testInfo, function( sessionId, winId ){
 
             var session = new TestSession( sessionId, function(){
