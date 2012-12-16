@@ -2,3 +2,5 @@
 *.opts
 node_modules/*
 node_modules\*
+**/chromedriver.log
+*.iml
