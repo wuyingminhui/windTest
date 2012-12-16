@@ -61,9 +61,11 @@ module.exports = {
      */
 
     _runTest: function( client, url, obj, next ){
-        client.protocol.url( url );
-        client.executeAsync( ClientCodeWrap, [ obj ], function(){
-            next();
+        client.openWindow( url, function( ret ){
+            obj.winId = ret.value;
+            client.executeAsync( ClientCodeWrap, [ obj ], function(){
+                next( ret.value );
+            });
         });
     },
 
@@ -75,26 +77,32 @@ module.exports = {
 
     newTest: function( obj, next ){
 
-        var sessionId = obj.sessionId;
         var url = obj.url;
         var browserName = obj.browserName;
-        var client = SessionClientList[ sessionId ];
-        var winId = this._newWinId();
+        var client = SessionClientList[ obj.sessionId ];
         var self = this;
+        var testInfo = {
+            sessionId: obj.sessionId,
+            parentId: obj.winId,
+            code: obj.code,
+            globalData: obj.globalData,
+            libs: obj.libs
+        };
 
         // 如果已经存在会话
 
         if( client ){
-            self._runTest( client, url, obj, function(){
-                next( sessionId, winId );
+            self._runTest( client, url, testInfo, function( winId ){
+                next( testInfo.sessionId, winId );
             });
         }
         else {
 
             this._newSession({ browserName: browserName }, function( client, sessionId ){
                 SessionClientList[ sessionId ] = client;
-                self._runTest( client, url, obj, function(){
-                    next( sessionId, winId );
+                testInfo.sessionId = sessionId;
+                self._runTest( client, url, testInfo, function( winId ){
+                    next( testInfo.sessionId, winId );
                 });
             });
         }
@@ -116,7 +124,15 @@ module.exports = {
         else {
             next();
         }
+    },
+
+    closeWindow: function( sessionId, winId, next ){
+        var client = SessionClientList[ sessionId ];
+        if( client ){
+            client.closeWindow( winId, next );
+        }
+        else {
+            next();
+        }
     }
-
-
 };

@@ -15,8 +15,10 @@ function ObjectToArray( name, obj ){
     var key;
 
     for( key in obj ){
-        fieldArray.push( key );
-        fieldArray.push( obj[ key ] );
+        if( obj[ key ] ){
+            fieldArray.push( key );
+            fieldArray.push( JSON.stringify( obj[ key ] ) );
+        }
     }
 
     fieldArray.splice( 0, 0, name );
@@ -28,6 +30,7 @@ function ObjectToArray( name, obj ){
 /**
  * 用于设置session数据的Class
  * @param id
+ * @param next
  */
 
 var Session = function( id, next ){
@@ -93,6 +96,7 @@ Session.prototype = {
     /**
      * 初始化，设置GlobalData为空对象
      * @param id
+     * @param ifExist
      * @param next
      * @private
      */

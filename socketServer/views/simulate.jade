@@ -1,0 +1,57 @@
+extends layout
+
+block content
+    h1= title
+    p Welcome to #{title}
+
+    div.test-info
+        h3 信息
+        table.table.table-bordered.table-striped.J_TestInfoTable
+            colgroup
+                col.span1
+                col.span2
+            thead
+                tr
+                    th 字段
+                    th 值
+            tbody
+
+    div.new-test
+        h3 执行新测试
+        p
+            a.btn.J_NewTestTrigger 新测试
+        div 子测试列表
+            ul.J_ChildTestList
+
+    div.global-data
+        h3 全局数据
+        form.form-horizontal
+            div.control-group
+                lable.control-label 字段名
+                div.controls
+                    input(type="text",placeholder="输入字段名").J_GlobalDataKey
+            div.control-group
+                lable.control-label 值
+                div.controls
+                    input(type="text",placeholder="输入字段对应的值").J_GlobalDataValue
+            div.control-group
+                div.controls
+                    button.btn.J_GlobalDataSetTrigger 添加
+
+    div.finish-test
+        h3 测试结束
+        form.form-horizontal
+            div.control-group
+                lable.control-label 测试结果
+                div.controls
+                    textarea.J_TestResult {"passed":100}
+            div.control-group
+                div.controls
+                    button.btn.J_FinishTestTrigger 结束
+
+    div.J_Response
+
+    // Javascript
+    script(src="/javascripts/libs/socket.io/socket.io.js")
+    script(src="/javascripts/libs/jquery-1.8.3-min.js")
+    script(src="/javascripts/simulate.js")

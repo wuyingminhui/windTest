@@ -31,6 +31,7 @@ app.configure('development', function(){
 });
 
 app.get('/', routes.index);
+app.get('/simulate', routes.simulate);
 app.get('/users', user.list);
 
 // Express 3.x 的app将不再是一个httpServer instance，
