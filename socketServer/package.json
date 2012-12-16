@@ -8,6 +8,8 @@
         "underscore": "*",
         "express": "3.0.3",
         "jade": "*",
-        "redis": "*"
+        "redis": "*",
+        "webdriverNode": "0.0.10",
+        "socket.io": "*"
     }
 }
