@@ -61,12 +61,38 @@ module.exports = {
      */
 
     _runTest: function( client, url, obj, next ){
-        client.openWindow( url, function( ret ){
-            obj.winId = ret.value;
-            client.executeAsync( ClientCodeWrap, [ obj ], function(){
-                next( ret.value );
+
+        /**
+         * 通过parentId是否存在来检查是否为第一次，如果为第一次，使用URL，否则新建窗口
+         */
+        if( obj.parentId ){
+
+            /**
+             * 先激活到parentwindow，否则如果刚刚已经关闭过窗口，当前激活句柄还是在那个已经关闭的句柄上，会出错
+             */
+
+            client.protocol.window( obj.parentId );
+
+            client.openWindow( url, function( ret ){
+                obj.winId = ret.value;
+                client.executeAsync( ClientCodeWrap, [ obj ], function(){
+                    next( ret.value );
+                });
             });
-        });
+        }
+        else {
+
+            client.url( url, function(){
+                // 获取默认页面的句柄
+                client.protocol.windowHandle(function( ret ){
+                    obj.winId = ret.value;
+                    // 执行脚本
+                    client.executeAsync( ClientCodeWrap, [ obj ], function(){
+                        next( ret.value );
+                    });
+                });
+            });
+        }
     },
 
     /**

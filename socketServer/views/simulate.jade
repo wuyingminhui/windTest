@@ -21,7 +21,17 @@ block content
         p
             a.btn.J_NewTestTrigger 新测试
         div 子测试列表
-            ul.J_ChildTestList
+            table.table.table-bordered.table-striped.J_ChildTestList
+                colgroup
+                    col.span1
+                    col.span1
+                    col.span2
+                thead
+                    tr
+                        th winId
+                        th stat
+                        th result
+                tbody
 
     div.global-data
         h3 全局数据

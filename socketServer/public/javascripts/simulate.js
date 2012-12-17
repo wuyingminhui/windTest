@@ -63,12 +63,22 @@
             // 发送新测试请求
             newTest(function( result ){
 
-                alert( JSON.stringify( result ) );
+                console.log( 'new child running: ', result );
+                var winId = result.winId;
+                addNewChildTest({
+                    winId: winId,
+                    stat: 'Running',
+                    result: ''
+                });
 
                 // 请求当自测试结束后，通知client
                 waitTestFinish( result.winId, function( result ){
 
-                    alert( 'FINISHED' );
+                    console.log( 'child done: ', result );
+                    updateChildTest( winId, {
+                        stat: 'done',
+                        result: result.winResult
+                    });
                 });
             });
         });
@@ -128,9 +138,36 @@
             HTML +=  '<tr><td>' + key + '</td><td>' + value + '</td></tr>';
         }
 
-        console.log( HTML );
-
-        debugger;
         $( '.J_TestInfoTable tbody').append( HTML );
+
+        document.title = config.winId;
     }
+
+    /**
+     * 添加一个新的子测试的记录
+     */
+    function addNewChildTest( childInfo ){
+
+        var HTML = '<tr class="J_ChildTestItem-' + childInfo.winId + '">\
+        <td class="J_WinId">' + childInfo.winId + '</td>\
+        <td class="J_Stat">' + childInfo.stat + '</td>\
+        <td class="J_Result">' + childInfo.result + '</td></tr>'
+
+        $( '.J_ChildTestList tbody').append( HTML );
+    }
+
+    function updateChildTest( winId, info ){
+
+        console.log( 'tr selector: ', '.J_ChildTestList tbody ' + 'J_ChildTestItem-' + winId );
+        console.log( 'tr info ', info );
+        var tr = $( '.J_ChildTestList tbody ' + '.J_ChildTestItem-' + winId );
+        if( info.stat ){
+            tr.find( '.J_Stat').html( info.stat );
+        }
+
+        if( info.result ){
+            tr.find( '.J_Result').html( JSON.stringify( info.result ) );
+        }
+    }
+
 })();

@@ -75,9 +75,15 @@ describe('Session Test', function(){
     it( '#addWin(), #getWin(), #setWin()', function( done ){
 
         var winId = winList[ 0 ];
+
+        /**
+         * 注意到，Redis中的基本数值都是String
+         */
+
         var winInfo = {
-            parentId: 22,
-            stat: 'running'
+            parentId: '22',
+            stat: 'running',
+            winId: winId
         };
 
         // addWin() & getWin()
@@ -91,8 +97,9 @@ describe('Session Test', function(){
 
                     sessionIst.getWin( winId, function( err, w ){
                         var expectWinObj = {
-                            parentId: 22,
-                            stat: stat
+                            parentId: '22',
+                            stat: stat,
+                            winId: winId
                         };
                         assert.deepEqual( w, expectWinObj );
                         done();

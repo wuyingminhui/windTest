@@ -2,6 +2,7 @@
  * 测试的Session数据存储
  */
 
+var _ = require( 'underscore' );
 var Redis = require( 'redis' );
 var Client = Redis.createClient();
 
@@ -15,14 +16,21 @@ function ObjectToArray( name, obj ){
     var key;
 
     for( key in obj ){
-        if( obj[ key ] ){
-            fieldArray.push( key );
+        fieldArray.push( key );
+
+        /**
+         * 若发现是一个Object对象，则将其序列化为字符串储存
+         */
+
+        if(_.isObject( obj[ key ] )){
             fieldArray.push( JSON.stringify( obj[ key ] ) );
+        }
+        else {
+            fieldArray.push( obj[ key ] );
         }
     }
 
     fieldArray.splice( 0, 0, name );
-
     return fieldArray;
 }
 
@@ -141,6 +149,7 @@ Session.prototype = {
      */
 
     addWin: function( id, winObj, next ){
+        winObj.winId = id;
         this.setWin( id, winObj, next );
     },
 
@@ -163,6 +172,7 @@ Session.prototype = {
      */
 
     setWin: function( id, winObj, next ){
+        winObj.winId = id;
         var winKey = Session.winId( this.sessionId, id );
         // 将object改造成array的形式
         var winArr = ObjectToArray( winKey, winObj );
@@ -199,7 +209,6 @@ Session.prototype = {
      */
 
     getAllWins: function( next ){
-        var self = this;
         var dumpWinKey = Session.winId( this.sessionId, '*' );
         Client.keys( dumpWinKey, function( err, keys ){
 

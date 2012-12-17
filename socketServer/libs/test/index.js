@@ -79,6 +79,8 @@ module.exports = {
                         // 关闭当前window
                         TestDriver.closeWindow( sessionId, winId, function(){
                             next({
+                                sessionId: sessionId,
+                                winId: winId,
                                 ifAllFinish: false,
                                 winResult: testResult
                             });
@@ -90,6 +92,8 @@ module.exports = {
                         self.getAllTestResult( sessionId, function( resultList ){
                             TestDriver.finishSession( sessionId, function(){
                                 next({
+                                    sessionId: sessionId,
+                                    winId: winId,
                                     ifAllFinish: true,
                                     allResult: resultList,
                                     winResult: testResult

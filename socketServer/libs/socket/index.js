@@ -41,14 +41,14 @@ var Routes = {
             // 检查是否所有测试都结束了，否则通知其父页面
             if( !ret.ifAllFinish ){
                 // 通知parent window
-                var sessionId = info.sessionId;
-                var winId = info.winId;
+                var sessionId = ret.sessionId;
+                var winId = ret.winId;
                 var callback;
 
                 if( TestFinishCallback[ sessionId ] ){
                     callback = TestFinishCallback[ sessionId ][ winId ];
                     if( typeof callback == 'function' ){
-                        callback( info );
+                        callback( ret );
                         delete TestFinishCallback[ sessionId ][ winId ];
                     }
                 }
