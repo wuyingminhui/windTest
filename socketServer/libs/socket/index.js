@@ -4,7 +4,12 @@
 var _ = require( 'underscore' );
 var Test = require( '../test' );
 
-var TestCallBack = {};
+/**
+ * 用于保存当摸个测试用例结束时需要执行的回调（返回给client）
+ * TestFinishCallback[ sessionId ][ windId ]
+ */
+
+var TestFinishCallback = {};
 
 var Routes = {
 
@@ -17,41 +22,57 @@ var Routes = {
     NEW_TEST: function( testData, next ){
         console.log( 'NEW TEST: ', testData );
         Test.newTest( testData, function( obj ){
-            var sessionId = obj.sessionId;
             var winId = obj.winId;
 
-            if( !TestCallBack[ sessionId ] ){
-                TestCallBack[ sessionId ] = {};
-            }
-
-            TestCallBack[ sessionId ][ winId ] = next;
+            // 讲新建的窗口Id返回给父窗口
+            next({ winId: winId } );
         });
     },
 
     /**
      * 一次测试的结束
      * @param info
-     * @param next
      */
 
-    TEST_FINISH: function( info, next ){
+    TEST_FINISH: function( info ){
+
         Test.finish( info, function( ret ){
-            console.log( 'TEST FINISHED!!!!!!!', ret );
+
+            // 检查是否所有测试都结束了，否则通知其父页面
             if( !ret.ifAllFinish ){
                 // 通知parent window
                 var sessionId = info.sessionId;
                 var winId = info.winId;
                 var callback;
 
-                if( TestCallBack[ sessionId ] ){
-                    callback = TestCallBack[ sessionId ][ winId ];
+                if( TestFinishCallback[ sessionId ] ){
+                    callback = TestFinishCallback[ sessionId ][ winId ];
                     if( typeof callback == 'function' ){
                         callback( info );
-                        delete TestCallBack[ sessionId ][ winId ];
+                        delete TestFinishCallback[ sessionId ][ winId ];
                     }
                 }
             }
         });
+    },
+
+    /**
+     * 请求监听某个测试窗口，当其完成时，讲执行next
+     * @param info
+     * @param next
+     */
+
+    WAIT_TEST: function( info, next ){
+
+        // 获取相关信息
+        console.log( 'WAIT_TEST!!!', info );
+        var sessionId = info.sessionId;
+        var winId = info.winId;
+        if( !TestFinishCallback[ sessionId ] ){
+            TestFinishCallback[ sessionId ] = {};
+        }
+
+        TestFinishCallback[ sessionId ][ winId ] = next;
     },
 
     /**
