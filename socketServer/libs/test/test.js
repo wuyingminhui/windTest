@@ -5,7 +5,7 @@
  */
 
 var TestSession = require( '../redis/session' );
-var TestDriver = require( '../webdriverNode' );
+var TestDriver = require( '../webdriver/webdriver' );
 
 module.exports = {
 

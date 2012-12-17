@@ -9,7 +9,7 @@
         "express": "3.0.3",
         "jade": "*",
         "redis": "*",
-        "webdriverNode": "0.0.10",
+        "webdriverNode": "0.0.11",
         "socket.io": "*"
     }
 }

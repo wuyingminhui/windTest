@@ -2,7 +2,7 @@
  *
  */
 var _ = require( 'underscore' );
-var Test = require( '../test' );
+var Test = require( '../test/test' );
 
 /**
  * 用于保存当摸个测试用例结束时需要执行的回调（返回给client）

@@ -9,7 +9,7 @@ var express = require('express')
   , path = require('path')
   , socketIo = require('socket.io');
 
-var Socket = require( './libs/socket' );
+var Socket = require( './libs/socket/socket' );
 
 var app = express();
 
