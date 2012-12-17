@@ -10,6 +10,13 @@ var Config = require( './config.json' );
 var S_PREFIX = Config[ 'SESSION_PREFIX' ];
 var W_PREFIX = Config[ 'WIN_PREFIX' ];
 
+/**
+ * Session数据的超时，默认10分钟如果没有对session进行操作，则自动销毁
+ * @type {number}
+ */
+
+var SESSION_TIMEOUT = 10 * 60;
+
 function ObjectToArray( name, obj ){
 
     var fieldArray = [];
@@ -32,6 +39,16 @@ function ObjectToArray( name, obj ){
 
     fieldArray.splice( 0, 0, name );
     return fieldArray;
+}
+
+/**
+ * 设置Key的超时
+ * @param key
+ * @param timeout
+ * @param next
+ */
+function SetExpire( key, timeout, next ){
+    Client.expire( key, timeout, next );
 }
 
 
@@ -94,7 +111,18 @@ Session.keyToWinId = function( key ){
  */
 
 Session.sessionExist = function( id, next ){
-    Client.exists( this.sessionId( id ), next );
+    Client.keys( this.sessionId( id ) + '*', function( err, ifExist ){
+        if( err ){
+            next( err );
+        }
+        else {
+            /**
+             * ifExist返回的是0或者1
+             */
+
+            next( err, !!( ifExist.length ) );
+        }
+    });
 };
 
 //======== Prototype ==========
@@ -113,10 +141,27 @@ Session.prototype = {
         this.sessionId = id;
         this.sessionKey = Session.sessionId( id );
         this.globalDataKey = this.sessionKey + ':globalData';
+        this.expireTimeout = SESSION_TIMEOUT;
+        var self = this;
+
         if( !ifExist ){
             // 设置全局数据
-            Client.set( this.globalDataKey, JSON.stringify( {} ), next );
+            Client.set( this.globalDataKey, JSON.stringify( {} ), function(){
+                // 设置超时
+                self.setExpire(function(){
+                    next();
+                });
+            });
         }
+        else {
+            self.setExpire(function(){
+                next();
+            });
+        }
+    },
+
+    setExpireTimeout: function( timeout ){
+        this.expireTimeout = timeout;
     },
 
 
@@ -139,6 +184,8 @@ Session.prototype = {
 
     setGlobalData: function( data, next ){
         Client.set( this.globalDataKey, JSON.stringify( data ), next );
+        // 设置超时
+        this.setExpire();
     },
 
     /**
@@ -180,6 +227,8 @@ Session.prototype = {
         winArr.push( next );
 
         Client.hmset.apply( Client, winArr );
+        // 设置超时
+        this.setExpire();
     },
 
     /**
@@ -248,6 +297,8 @@ Session.prototype = {
     removeWin: function( winId, next ){
         var winKey = Session.winId( this.sessionId, winId );
         Client.del( winKey, next );
+        // 设置超时
+        this.setExpire();
     },
 
     /**
@@ -261,6 +312,28 @@ Session.prototype = {
             keys.splice( 0, 0, self.sessionKey );
             keys.push( next );
             Client.del.apply( Client, keys );
+        } );
+    },
+
+    /**
+     * 更新数据的 expire.
+     * @param next
+     */
+    setExpire: function( next ){
+        var self = this;
+        Client.keys( this.sessionKey + '*', function( err, keys ){
+            keys.splice( 0, 0, self.sessionKey );
+
+            var count = 0;
+            keys.forEach(function( key ){
+                SetExpire( key, self.expireTimeout, function(){
+
+                    count++;
+                    if( count >= keys.length ){
+                        next && next();
+                    }
+                });
+            });
         } );
     }
 };

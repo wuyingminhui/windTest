@@ -178,9 +178,98 @@ describe('Session Test', function(){
         });
     });
 
-    it( '#destroy', function(done){
+    it('#expire normal', function( done ){
+
+
+        var newSessionId = '__REDIS_WIN_TEST_SESSIONID_EXPIRE_';
+        // 添加一个
+        var newSession = new SessionMgr( newSessionId, function(){
+
+            // 设置超时时间为5s
+            newSession.setExpireTimeout( 5 );
+            // 更新超时
+            newSession.setExpire(function(){
+                // 先检查现在具有
+                SessionMgr.sessionExist( newSessionId, function( err, ifExist ){
+                    assert.equal( true, ifExist );
+
+                    // 4s后应该还没销毁
+                    setTimeout(function(){
+                        SessionMgr.sessionExist( newSessionId, function( err, ifExist ){
+
+                            assert.equal( true, ifExist );
+
+                            // 5s后应该销毁了
+                            setTimeout(function(){
+                                SessionMgr.sessionExist( newSessionId, function( err, ifExist ){
+                                    assert.equal( false, ifExist );
+                                    done();
+                                });
+                            }, 1000);
+                        });
+                    }, 4000 );
+                });
+            });
+        });
+    });
+
+    it( '#expire active',function( done ){
+
+        var newSessionId = '__REDIS_WIN_TEST_SESSIONID_EXPIRE_';
+        // 添加一个
+        var newSession = new SessionMgr( newSessionId, function(){
+
+            // 设置超时时间为5s
+            newSession.setExpireTimeout( 5 );
+            // 更新超时
+            newSession.setExpire(function(){
+                // 先检查现在具有
+                SessionMgr.sessionExist( newSessionId, function( err, ifExist ){
+                    assert.equal( true, ifExist );
+
+                    // 4s后应该还没销毁
+                    setTimeout(function(){
+                        SessionMgr.sessionExist( newSessionId, function( err, ifExist ){
+
+                            assert.equal( true, ifExist );
+
+                            newSession.setExpire(function(){
+                                // 5s后由于中间又被激活过，因此没有销毁
+                                setTimeout(function(){
+                                    SessionMgr.sessionExist( newSessionId, function( err, ifExist ){
+                                        assert.equal( true, ifExist );
+
+                                        // 4s后应该还没销毁
+                                        setTimeout(function(){
+                                            SessionMgr.sessionExist( newSessionId, function( err, ifExist ){
+
+                                                assert.equal( true, ifExist );
+
+                                                // 5s后由于中间又被激活过，因此没有销毁
+                                                setTimeout(function(){
+                                                    SessionMgr.sessionExist( newSessionId, function( err, ifExist ){
+                                                        assert.equal( false, ifExist );
+                                                        done();
+                                                    });
+                                                }, 1000);
+                                            });
+                                        }, 3000 );
+                                    });
+                                }, 1000);
+                            });
+                        });
+                    }, 4000 );
+                });
+            });
+        });
+    });
+
+    it( '#destroy()', function(done){
         sessionIst.destroy(function(){
-            done();
+            SessionMgr.sessionExist( sessionId, function( err, ifExist ){
+                assert.equal( false, ifExist );
+                done();
+            });
         });
     });
 });

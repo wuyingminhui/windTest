@@ -98,9 +98,10 @@ module.exports = {
                                     allResult: resultList,
                                     winResult: testResult
                                 });
+                                // 销毁session数据
+                                session.destroy();
                             } );
                         });
-
                     }
                 });
             });
