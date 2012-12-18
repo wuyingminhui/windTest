@@ -63,7 +63,6 @@
             // 发送新测试请求
             newTest(function( result ){
 
-                console.log( 'new child running: ', result );
                 var winId = result.winId;
                 addNewChildTest({
                     winId: winId,
@@ -74,12 +73,41 @@
                 // 请求当自测试结束后，通知client
                 waitTestFinish( result.winId, function( result ){
 
-                    console.log( 'child done: ', result );
                     updateChildTest( winId, {
                         stat: 'done',
                         result: result.winResult
                     });
                 });
+            });
+        });
+
+        /**
+         * 设置全局数据
+         */
+
+        $( '.J_GlobalDataSetTrigger').bind( 'click', function( e ){
+
+            e.preventDefault();
+            var key = $( '.J_GlobalDataKey').val();
+            var value = $( '.J_GlobalDataValue').val();
+            var obj = {};
+            obj[ key ] = value;
+
+            if( key && value ){
+                setGlobalData( obj, function( data ){
+                    renderGlobalData( data );
+                });
+            }
+        });
+
+        /**
+         * 刷新全局数据
+         */
+        $( '.J_GetGlobalDataTrigger').bind( 'click', function( e ){
+
+            e.preventDefault();
+            getGlobalData(function( data ){
+                renderGlobalData( data );
             });
         });
     }
@@ -95,7 +123,8 @@
             winId: Config.winId,
             url: document.location.href,
             browserName: 'chrome',
-            code: 'alert("hello");'
+            code: 'if( console ){ console.log( "Test Begin!" ); } else { alert( "Test Begin!" ); }',
+            globalData: Config.globalData
         }, next );
     }
 
@@ -121,7 +150,8 @@
         Socket.emit( 'TEST_FINISH', {
             sessionId: Config.sessionId,
             winId: Config.winId,
-            testResult: $.parseJSON( $( '.J_TestResult').val())
+            testResult: $.parseJSON( $( '.J_TestResult').val()),
+            globalData: Config.globalData
         });
     }
 
@@ -135,6 +165,10 @@
         var HTML = '';
         for( key in config ){
             value = config[ key ];
+            if( key == 'globalData' ){
+                value = JSON.stringify( value );
+            }
+
             HTML +=  '<tr><td>' + key + '</td><td>' + value + '</td></tr>';
         }
 
@@ -156,10 +190,34 @@
         $( '.J_ChildTestList tbody').append( HTML );
     }
 
+    function renderGlobalData( data ){
+
+        // 清空当前的数据
+        $( '.J_GlobalInfoTable tbody').html( '' );
+
+        var key
+            , value;
+
+        for( key in data ){
+            value = data[ key ];
+            addNewGlobalDataItem( key, value );
+        }
+    }
+
+    function addNewGlobalDataItem( key, value ){
+
+        var HTML = '<tr>\
+        <td>' + key + '</td>\
+        <td>' + value + '</td></tr>';
+
+        // 添加到全局中
+        Config.globalData[ key ] = value;
+
+        $( '.J_GlobalInfoTable tbody').append( HTML );
+    }
+
     function updateChildTest( winId, info ){
 
-        console.log( 'tr selector: ', '.J_ChildTestList tbody ' + 'J_ChildTestItem-' + winId );
-        console.log( 'tr info ', info );
         var tr = $( '.J_ChildTestList tbody ' + '.J_ChildTestItem-' + winId );
         if( info.stat ){
             tr.find( '.J_Stat').html( info.stat );
@@ -168,6 +226,30 @@
         if( info.result ){
             tr.find( '.J_Result').html( JSON.stringify( info.result ) );
         }
+    }
+
+    function getGlobalData( next ){
+        Socket.emit( 'GLOBAL_DATA', { type: 'get' }, function( ret ){
+            if( ret.success ){
+                next( ret.data );
+            }
+            else {
+                alert( JSON.stringify( ret.error ) || '获取数据失败');
+                next();
+            }
+        } );
+    }
+
+    function setGlobalData( obj, next ){
+        Socket.emit( 'GLOBAL_DATA', { type: 'set', data: obj }, function( ret ){
+            if( ret.success ){
+                next( ret.data );
+            }
+            else {
+                alert( JSON.stringify( ret.error ) || '设置数据失败');
+                next();
+            }
+        });
     }
 
 })();

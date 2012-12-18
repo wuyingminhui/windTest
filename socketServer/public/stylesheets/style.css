@@ -6,3 +6,14 @@ body {
 a {
   color: #00B7FF;
 }
+
+section {
+    background: #F9F9F9;
+    padding: 15px;
+    margin-bottom: 40px;
+    border-radius: 7px;
+}
+
+table {
+    background: white;
+}

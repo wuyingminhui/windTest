@@ -4,8 +4,11 @@ block content
     h1= title
     p Welcome to #{title}
 
-    div.test-info
-        h3 信息
+    section.test-info
+        h3.page-header 初始化信息
+        p 下面将列出测试初始化时由
+            code Selenium
+            植入到页面中的信息
         table.table.table-bordered.table-striped.J_TestInfoTable
             colgroup
                 col.span1
@@ -16,11 +19,13 @@ block content
                     th 值
             tbody
 
-    div.new-test
-        h3 执行新测试
+    section.new-test
+        h3.page-header 执行新测试
         p
-            a.btn.J_NewTestTrigger 新测试
-        div 子测试列表
+            a.btn.btn-primary.J_NewTestTrigger 新测试
+        div
+            h5 子测试列表
+            p 下面是否有通过当前页面打开的子窗口信息
             table.table.table-bordered.table-striped.J_ChildTestList
                 colgroup
                     col.span1
@@ -33,8 +38,9 @@ block content
                         th result
                 tbody
 
-    div.global-data
-        h3 全局数据
+    section.global-data
+        h3.page-header 全局数据（GlobalData）
+        p 设置所有页面共享的全局数据，点击`刷新`获取当前的全局数据.
         form.form-horizontal
             div.control-group
                 lable.control-label 字段名
@@ -46,20 +52,36 @@ block content
                     input(type="text",placeholder="输入字段对应的值").J_GlobalDataValue
             div.control-group
                 div.controls
-                    button.btn.J_GlobalDataSetTrigger 添加
+                    button.btn.btn-primary.J_GlobalDataSetTrigger 添加
+                    button.btn.offset1.J_GetGlobalDataTrigger 刷新
 
-    div.finish-test
-        h3 测试结束
+        table.table.table-bordered.table-striped.J_GlobalInfoTable
+            colgroup
+                col.span1
+                col.span2
+            thead
+                tr
+                    th 字段
+                    th 值
+            tbody
+
+    section.finish-test
+        h3.page-header 结束当前测试
         form.form-horizontal
             div.control-group
-                lable.control-label 测试结果
+                lable.control-label 测试结果(JSON)
                 div.controls
                     textarea.J_TestResult {"passed":100}
             div.control-group
                 div.controls
-                    button.btn.J_FinishTestTrigger 结束
+                    button.btn.btn-danger.J_FinishTestTrigger 结束
+                    将测试结果发送给服务器，并由服务器关闭当前窗口
 
-    div.J_Response
+    section.J_Response
+
+    // Config info simulation
+    script
+        //window.__WIND_TEST_CONFIG = {"code":"alert('hello world');","sessionId":"1355820888576","winId":"f1-2","globalData":{}}
 
     // Javascript
     script(src="/javascripts/libs/socket.io/socket.io.js")

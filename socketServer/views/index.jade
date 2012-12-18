@@ -3,26 +3,9 @@ extends layout
 block content
     h1= title
     p Welcome to #{title}
-    div.command
-        h3 消息发送
-        form.form-horizontal
-            div.control-group
-                label.control-label 事件类型
-                div.controls
-                    select.J_Type
-                        option(value="NEW_TEST") 新测试
-                        option(value="TEST_FINISH") 测试结束
-                        option(value="TEST_ERROR") 测试出错
-            div.control-group
-                lable.control-label 消息
-                div.controls
-                    input.J_Msg(type="text")
-            div.control-group
-                div.controls
-                    button.btn.J_Trigger 发送
 
-    div.test
-        h3 测试用例
+    section.test
+        h3.page-header 测试用例
         form.form-horizontal
             div.control-group
                 lable.control-label URL
@@ -35,12 +18,22 @@ block content
             div.control-group
                 lable.control-label 用例代码
                 div.controls
-                    textarea.J_TestCode alert('hello world');
+                    textarea.J_TestCode alert('Test Begin!');
             div.control-group
                 div.controls
-                    button.btn.J_TestRun 测试
+                    button.btn.btn-primary.J_TestRun 测试
 
-    div.J_Response
+    section
+        h3.page-header 测试结果
+        table.table.table-bordered.table-striped.J_TestResultTable
+            colgroup
+                col.span1
+                col.span2
+            thead
+                tr
+                    th 窗口Id
+                    th 测试结果
+            tbody
 
     // Javascript
     script(src="/javascripts/libs/socket.io/socket.io.js")

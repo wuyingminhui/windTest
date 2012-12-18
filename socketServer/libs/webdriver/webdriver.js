@@ -111,7 +111,7 @@ module.exports = {
             sessionId: obj.sessionId,
             parentId: obj.winId,
             code: obj.code,
-            globalData: obj.globalData,
+            globalData: obj.globalData || {},
             libs: obj.libs
         };
 

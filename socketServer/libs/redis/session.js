@@ -146,16 +146,23 @@ Session.prototype = {
 
         if( !ifExist ){
             // 设置全局数据
-            Client.set( this.globalDataKey, JSON.stringify( {} ), function(){
-                // 设置超时
-                self.setExpire(function(){
-                    next();
-                });
+            Client.set( this.globalDataKey, JSON.stringify( {} ), function( err ){
+
+                if( err ){
+                    next( err );
+                }
+                else {
+                    // 设置超时
+                    self.setExpire(function( err ){
+                        next( err, self );
+                    });
+                }
+
             });
         }
         else {
-            self.setExpire(function(){
-                next();
+            self.setExpire(function( err ){
+                next( err, self );
             });
         }
     },
