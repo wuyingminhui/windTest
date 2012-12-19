@@ -10,3 +10,7 @@ exports.index = function(req, res){
 exports.simulate = function(req, res){
     res.render('simulate', { title: 'WindTest Client Simulation!', pageName: 'simulate' });
 };
+
+exports.doc = function(req, res){
+    res.render('doc', { title: 'WindTest Client Simulation!', pageName: 'doc' });
+};

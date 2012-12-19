@@ -1,5 +1,6 @@
 /**
- * Socket 接口
+ * @fileOverview Socket提供给Client的接口
+ * @author neekey<ni184775761@gmail.com>
  */
 
 var _ = require( 'underscore' );
@@ -8,6 +9,7 @@ var Test = require( '../test/test' );
 /**
  * 用于保存当某个测试用例（当个window）结束时需要执行的回调（返回给client）
  * TestFinishCallback[ sessionId ][ windId ]
+ * @ignore
  */
 
 var TestFinishCallback = {};
@@ -15,10 +17,15 @@ var TestFinishCallback = {};
 /**
  * 用于保存当某个测试用例（所有相关window）结束时需要执行的回调（返回给client）
  * AllTestFinishCallback[ sessionId ]
+ * @ignore
  */
 var AllTestFinishCallback = {};
 
-var Routes = {
+/**
+ * Socket API
+ * @type {Object}
+ */
+var SOCKET_API = {
 
     /**
      * 新测试到来
@@ -35,11 +42,11 @@ var Routes = {
 
     /**
      * 一次测试的结束
-     * @param info.sessionId
-     * @param info.parentId
-     * @param info.winId
-     * @param info.testResult
-     * @param info.globalData
+     * @param {Object} info
+     * @param {String} info.sessionId
+     * @param {String} info.parentId
+     * @param {String} info.winId
+     * @param {Object} info.testResult
      */
 
     TEST_FINISH: function( info ){
@@ -75,18 +82,13 @@ var Routes = {
     },
 
     /**
-     * @name WaitAllTestCallback
-     * @function
-     * @param {Array} allResult
-     * @param {String} allResult[].winId 窗口id
-     * @param {String} allResult[].testResult 该窗口的测试结果
-     */
-
-    /**
      * 请求监听整个测试的结束
      * @param {Object} testInfo
      * @param {String} testInfo.sessionId 会话Id
-     * @param {WaitAllTestCallback} next
+     * @param {Function} next callback
+     * @param {Object[]} next.allResult
+     * @param {String} next.allResult.winId 窗口id
+     * @param {String} next.allResult.testResult 该窗口的测试结果
      */
 
     WAIT_ALL_TEST: function( testInfo, next ){
@@ -95,22 +97,16 @@ var Routes = {
     },
 
     /**
-     * @name WaitTestCallback
-     * @function
-     * @param {Object} info
-     * @param {String} info.sessionId
-     * @param {String} info.winId
-     * @param {Boolean} info.ifAllFinish 是否整个测试用例都完成了
-     * @param {Object} info.winResult 本win的测试结果
-     * @param next
-     */
-
-    /**
      * 请求监听某个测试窗口，当其完成时，讲执行next
      * @param {Object} info
      * @param {String} info.sessionId
      * @param {String} info.winId
-     * @param {WaitTestCallback} next
+     * @param {Function} next callback
+     * @param {Object} next.info
+     * @param {String} next.info.sessionId
+     * @param {String} next.info.winId
+     * @param {Boolean} next.info.ifAllFinish 是否整个测试用例都完成了
+     * @param {Object} next.info.winResult 本win的测试结果
      */
 
     WAIT_TEST: function( info, next ){
@@ -126,21 +122,16 @@ var Routes = {
     },
 
     /**
-     * @name GlobalDataCallback
-     * @function
-     * @param {Object} result
-     * @param {Boolean} result.success 是否成功
-     * @param {Object} result.error 错误消息对象
-     * @param {Object} result.data 全局数据
-     */
-
-    /**
      * 获取/设置全局数据
      * @param {Object} reqData
      * @param {String} reqData.type 类型: set|get
      * @param {Object} reqData.data 需要设置的数据
      * @param {Object} reqData.sessionId
-     * @param {GlobalDataCallback} next
+     * @param {Function} next
+     * @param {Object} next.result
+     * @param {Boolean} next.result.success 是否成功
+     * @param {Object} next.result.error 错误消息对象
+     * @param {Object} next.result.data 全局数据
      */
 
     GLOBAL_DATA: function( reqData, next ){
@@ -188,7 +179,7 @@ module.exports = {
     handle: function( socket ){
 
         // 监听
-        _.each( Routes, function( fn, type ){
+        _.each( SOCKET_API, function( fn, type ){
             socket.on( type, fn );
         });
     }

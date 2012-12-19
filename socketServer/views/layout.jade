@@ -4,5 +4,11 @@ html
     title= title
     link(rel='stylesheet', href='/libs/bootstrap/css/bootstrap.min.css')
     link(rel='stylesheet', href='/stylesheets/style.css')
+
+    if pageName == 'doc'
+      script(src="/libs/jsdoc/scripts/prettify/prettify.js")
+      script(src="/libs/jsdoc/scripts/prettify/lang-css.js")
+      link(type="text/css",rel="stylesheet",href="/libs/jsdoc/styles/prettify-jsdoc.css")
+      link(type="text/css",rel="stylesheet",href="/libs/jsdoc/styles/jsdoc-default.css")
   body
     block content
