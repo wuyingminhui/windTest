@@ -1,6 +1,7 @@
 /**
- *
+ * Socket 接口
  */
+
 var _ = require( 'underscore' );
 var Test = require( '../test/test' );
 
@@ -65,9 +66,6 @@ var Routes = {
             // 若所有测试完毕
             else {
 
-                console.log( 'ALL TEST FINISHED! ', ret );
-                console.log( 'ALL TEST CALLBACK! ', AllTestFinishCallback[ sessionId ] );
-
                 callback = AllTestFinishCallback[ sessionId ];
                 if( typeof callback == 'function' ){
                     callback( ret.allResult );
@@ -76,17 +74,43 @@ var Routes = {
         });
     },
 
+    /**
+     * @name WaitAllTestCallback
+     * @function
+     * @param {Array} allResult
+     * @param {String} allResult[].winId 窗口id
+     * @param {String} allResult[].testResult 该窗口的测试结果
+     */
+
+    /**
+     * 请求监听整个测试的结束
+     * @param {Object} testInfo
+     * @param {String} testInfo.sessionId 会话Id
+     * @param {WaitAllTestCallback} next
+     */
+
     WAIT_ALL_TEST: function( testInfo, next ){
-        console.log( 'WAIT ALL TEST: ', testInfo );
         // 获取相关信息
-        var sessionId = testInfo.sessionId;
-        AllTestFinishCallback[ sessionId ] = next;
+        AllTestFinishCallback[ testInfo.sessionId ] = next;
     },
 
     /**
-     * 请求监听某个测试窗口，当其完成时，讲执行next
-     * @param info
+     * @name WaitTestCallback
+     * @function
+     * @param {Object} info
+     * @param {String} info.sessionId
+     * @param {String} info.winId
+     * @param {Boolean} info.ifAllFinish 是否整个测试用例都完成了
+     * @param {Object} info.winResult 本win的测试结果
      * @param next
+     */
+
+    /**
+     * 请求监听某个测试窗口，当其完成时，讲执行next
+     * @param {Object} info
+     * @param {String} info.sessionId
+     * @param {String} info.winId
+     * @param {WaitTestCallback} next
      */
 
     WAIT_TEST: function( info, next ){
@@ -101,6 +125,24 @@ var Routes = {
         TestFinishCallback[ sessionId ][ winId ] = next;
     },
 
+    /**
+     * @name GlobalDataCallback
+     * @function
+     * @param {Object} result
+     * @param {Boolean} result.success 是否成功
+     * @param {Object} result.error 错误消息对象
+     * @param {Object} result.data 全局数据
+     */
+
+    /**
+     * 获取/设置全局数据
+     * @param {Object} reqData
+     * @param {String} reqData.type 类型: set|get
+     * @param {Object} reqData.data 需要设置的数据
+     * @param {Object} reqData.sessionId
+     * @param {GlobalDataCallback} next
+     */
+
     GLOBAL_DATA: function( reqData, next ){
 
         var type = reqData.type;
@@ -109,7 +151,7 @@ var Routes = {
 
         if( type == 'get' ){
             Test.getGlobalData( sessionId, function( err, data ){
-                next( {
+                next({
                     success: err === null,
                     error: err,
                     data: data
@@ -118,7 +160,7 @@ var Routes = {
         }
         else if( type == 'set' ){
             Test.setGlobalData( sessionId, data, function( err, data ){
-                next( {
+                next({
                     success: err === null,
                     error: err,
                     data: data

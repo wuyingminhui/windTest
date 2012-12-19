@@ -42,20 +42,33 @@ function ObjectToArray( name, obj ){
 }
 
 /**
+ * @name SetExpireCallback
+ * @function
+ * @param {Object=null} err
+ */
+
+/**
  * 设置Key的超时
  * @param key
  * @param timeout
- * @param next
+ * @param {SetExpireCallback} next
  */
+
 function SetExpire( key, timeout, next ){
     Client.expire( key, timeout, next );
 }
 
+/**
+ * @name SessionCallback
+ * @function
+ * @param {Object=null} err
+ * @param {Session} S
+ */
 
 /**
  * 用于设置session数据的Class
  * @param id
- * @param next
+ * @param {SessionCallback} next
  */
 
 var Session = function( id, next ){
@@ -65,7 +78,7 @@ var Session = function( id, next ){
     // 先检查sessionId是否已经存在，否则报错
     Session.sessionExist( id, function( err, ifExist ){
         if( err ){
-            throw new err;
+            next( err );
         }
         else {
             self._init( id, ifExist, next );
@@ -78,12 +91,18 @@ var Session = function( id, next ){
 /**
  * 为sessionId补充前缀来构造对应的key
  * @param id
- * @return {*}
+ * @return {String}
  */
 
 Session.sessionId = function( id ){
     return S_PREFIX + id;
 };
+
+/**
+ * 个顶一个Key提取出其中的sessionId
+ * @param {String} key
+ * @return {String}
+ */
 
 Session.keyToSessionId = function( key ){
     return key.split(':')[ 1 ];
@@ -100,9 +119,22 @@ Session.winId = function( sessionId, id ){
     return this.sessionId( sessionId ) + ':' + W_PREFIX + id;
 };
 
+/**
+ * 给定一个Key提取出其中的winId
+ * @param {String} key
+ * @return {String}
+ */
+
 Session.keyToWinId = function( key ){
     return key.split( ':').pop();
 };
+
+/**
+ * @name SessionExistCallback
+ * @function
+ * @param {Object=null} err
+ * @param {Boolean} ifExist
+ */
 
 /**
  * 检查sessionId是否已经存在
@@ -130,10 +162,17 @@ Session.sessionExist = function( id, next ){
 Session.prototype = {
 
     /**
+     * @name _InitCallback
+     * @function
+     * @param {Object=null} err
+     * @param {Session} S
+     */
+
+    /**
      * 初始化，设置GlobalData为空对象
      * @param id
      * @param ifExist
-     * @param next
+     * @param {_InitCallback} next ( err, session )
      * @private
      */
 
@@ -167,14 +206,25 @@ Session.prototype = {
         }
     },
 
+    /**
+     * 设置会话的过期时间
+     * @param {Number} timeout 单位为秒
+     */
+
     setExpireTimeout: function( timeout ){
         this.expireTimeout = timeout;
     },
 
+    /**
+     * @name GlobalDataCallback
+     * @function
+     * @param {Object=null} err
+     * @param {Object} ret 返回的全局对象
+     */
 
     /**
      * 获取全局数据
-     * @param next
+     * @param {GlobalDataCallback} next
      */
 
     globalData: function( next ){
@@ -184,9 +234,15 @@ Session.prototype = {
     },
 
     /**
+     * @name SetGlobalDataCallback
+     * @function
+     * @param {Object=null} err
+     */
+
+    /**
      * 设置全局数据
      * @param data
-     * @param next
+     * @param {SetGlobalDataCallback} next
      */
 
     setGlobalData: function( data, next ){
@@ -196,10 +252,16 @@ Session.prototype = {
     },
 
     /**
+     * @name AddWinCallback
+     * @function
+     * @param {Object=null} err
+     */
+
+    /**
      * 添加一个测试win
      * @param id
-     * @param winObj
-     * @param next
+     * @param {Object} winObj 测试window信息
+     * @param {AddWinCallback} next
      */
 
     addWin: function( id, winObj, next ){
@@ -219,10 +281,16 @@ Session.prototype = {
     },
 
     /**
+     * @name SetWinCallback
+     * @function
+     * @param {Object=null} err
+     */
+
+    /**
      * 设置win数据
      * @param id
-     * @param winObj
-     * @param next
+     * @param {Object} winObj 需要设置的window信息
+     * @param {SetWinCallback} next
      */
 
     setWin: function( id, winObj, next ){
@@ -239,8 +307,15 @@ Session.prototype = {
     },
 
     /**
-     * 获取所有的win对象，以数组返回
-     * @param next
+     * @name GetAllWinIdsCallback
+     * @function
+     * @param {Object=null} err
+     * @param {String[]} ids 窗口id数组
+     */
+
+    /**
+     * 获取所有的win对象id数组，以数组返回
+     * @param {GetAllWinIdsCallback} next
      */
 
     getAllWinIds: function( next ){
@@ -254,14 +329,21 @@ Session.prototype = {
                 keys.forEach(function( key ){
                     ids.push( Number( Session.keyToWinId( key ) ) );
                 });
-                next( undefined, ids );
+                next( null, ids );
             }
         });
     },
 
     /**
+     * @name GetAllWinCallback
+     * @function
+     * @param {Object=null} err
+     * @param {Object[]} wins 窗口数据数组
+     */
+
+    /**
      * 获取winId列表
-     * @param next
+     * @param {GetAllWinCallback} next
      */
 
     getAllWins: function( next ){
@@ -286,7 +368,7 @@ Session.prototype = {
                         else {
                             allWins.push( win );
                             if( allWins.length == winLen ){
-                                next( undefined, allWins );
+                                next( null, allWins );
                             }
                         }
                     });
@@ -296,9 +378,15 @@ Session.prototype = {
     },
 
     /**
+     * @name RemoveWinCallback
+     * @function
+     * @param {Object=null} err
+     */
+
+    /**
      * 删除win
-     * @param winId
-     * @param next
+     * @param {String} winId
+     * @param {RemoveWinCallback} next
      */
 
     removeWin: function( winId, next ){
@@ -309,38 +397,74 @@ Session.prototype = {
     },
 
     /**
-     * 销毁session
-     * @param next
+     * @name DestroyCallback
+     * @function
+     * @param {Object=null} err
+     */
+
+    /**
+     * 销毁session数据
+     * @param {DestroyCallback} next
      */
 
     destroy: function(next){
         var self = this;
         Client.keys( this.sessionKey + '*', function( err, keys ){
-            keys.splice( 0, 0, self.sessionKey );
-            keys.push( next );
-            Client.del.apply( Client, keys );
+            if( err ){
+                next( err );
+            }
+            else {
+                keys.splice( 0, 0, self.sessionKey );
+                keys.push( next );
+                Client.del.apply( Client, keys );
+            }
         } );
     },
 
     /**
-     * 更新数据的 expire.
-     * @param next
+     * @name SessionSetExpireCallback
+     * @function
+     * @param {Object=null} err
+     */
+
+    /**
+     * 更新数据的expire倒计时.
+     * @param {SessionSetExpireCallback} [next]
      */
     setExpire: function( next ){
         var self = this;
         Client.keys( this.sessionKey + '*', function( err, keys ){
-            keys.splice( 0, 0, self.sessionKey );
 
-            var count = 0;
-            keys.forEach(function( key ){
-                SetExpire( key, self.expireTimeout, function(){
+            if( err ){
+                next( err );
+            }
+            else {
+                keys.splice( 0, 0, self.sessionKey );
 
-                    count++;
-                    if( count >= keys.length ){
-                        next && next();
-                    }
+                var count = 0;
+                var ifError = false;
+
+                keys.forEach(function( key ){
+                    SetExpire( key, self.expireTimeout, function( err ){
+
+                        // 如果已经出错就不再执行了
+                        if( ifError ){
+                            return;
+                        }
+
+                        if( err ){
+                            ifError = true;
+                            next( err );
+                        }
+                        else {
+                            count++;
+                            if( count >= keys.length ){
+                                next && next( null );
+                            }
+                        }
+                    });
                 });
-            });
+            }
         } );
     }
 };
