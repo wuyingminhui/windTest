@@ -1,0 +1,21 @@
+
+mixin item(name, title, url)
+    li(class=pageName == name ? 'active' : '')
+        a(href=url)= title
+
+
+div.navbar.navbar-inverse.navbar-fixed-top
+    div.navbar-inner
+        div.container
+            button.btn.btn-navbar
+                span.icon-bar
+                span.icon-bar
+                span.icon-bar
+            a.brand WindTest
+            div.nav-collapse.collapse
+                ul.nav
+                    +item('index', '新测试', '/')
+                    +item('doc', '文档', '/doc')
+
+
+
