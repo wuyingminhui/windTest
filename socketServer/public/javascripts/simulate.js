@@ -123,8 +123,7 @@
             winId: Config.winId,
             url: document.location.href,
             browserName: 'chrome',
-            code: 'if( console ){ console.log( "Test Begin!" ); } else { alert( "Test Begin!" ); }',
-            globalData: Config.globalData
+            code: 'if( console ){ console.log( "Test Begin!" ); } else { alert( "Test Begin!" ); }'
         }, next );
     }
 
@@ -150,8 +149,7 @@
         Socket.emit( 'TEST_FINISH', {
             sessionId: Config.sessionId,
             winId: Config.winId,
-            testResult: $.parseJSON( $( '.J_TestResult').val()),
-            globalData: Config.globalData
+            testResult: $.parseJSON( $( '.J_TestResult').val())
         });
     }
 
@@ -165,10 +163,6 @@
         var HTML = '';
         for( key in config ){
             value = config[ key ];
-            if( key == 'globalData' ){
-                value = JSON.stringify( value );
-            }
-
             HTML +=  '<tr><td>' + key + '</td><td>' + value + '</td></tr>';
         }
 
@@ -210,9 +204,6 @@
         <td>' + key + '</td>\
         <td>' + value + '</td></tr>';
 
-        // 添加到全局中
-        Config.globalData[ key ] = value;
-
         $( '.J_GlobalInfoTable tbody').append( HTML );
     }
 
@@ -229,7 +220,7 @@
     }
 
     function getGlobalData( next ){
-        Socket.emit( 'GLOBAL_DATA', { type: 'get' }, function( ret ){
+        Socket.emit( 'GLOBAL_DATA', { type: 'get', sessionId: Config.sessionId }, function( ret ){
             if( ret.success ){
                 next( ret.data );
             }
@@ -241,7 +232,7 @@
     }
 
     function setGlobalData( obj, next ){
-        Socket.emit( 'GLOBAL_DATA', { type: 'set', data: obj }, function( ret ){
+        Socket.emit( 'GLOBAL_DATA', { type: 'set', data: obj, sessionId: Config.sessionId }, function( ret ){
             if( ret.success ){
                 next( ret.data );
             }

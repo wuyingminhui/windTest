@@ -3,6 +3,7 @@
  */
 
 var WD = require( 'webdriverNode' );
+var TestSession = require( '../redis/session' );
 var ClientCodeWrap = require( './clientCodeWrap' );
 
 /**
@@ -11,29 +12,95 @@ var ClientCodeWrap = require( './clientCodeWrap' );
  */
 var SessionClientList = {};
 
-/**
- * winId
- * @type {number}
- */
-
-var WIN_ID = 0;
-
 module.exports = {
 
     /**
-     * 创建一个新的页面Id
-     * @return {number}
-     * @private
+     * 获取sessionId对应的client
+     * @param {Object} clientInfo 需要获取的client信息
+     * @param {String} [clientInfo.sessionId] 如果已经存在会话，则制定该会话的sessionId
+     * @param {String} [clientInfo.browserName] 如果是创建一个新的client，则需要制定需要测试的浏览器
+     * @param {Function} next callback
+     * @param {Object=null} next.err
+     * @param {Client} next.client
+     * @param {String} next.sessionId
      */
 
-    _newWinId: function(){
-        return ++WIN_ID;
+    getClient: function( clientInfo, next ){
+
+        var client;
+
+        if( typeof clientInfo.sessionId == 'undefined' ){
+
+            // 若没有给定sessionId，则应该为新创建一个
+            this._newSession( { browserName: clientInfo.browserName }, function( c, sId ){
+
+                // 储存Client
+                // 从session中获取session数据，重新实例化Client
+                new TestSession( sId, function( err, S ){
+                    S.setClientData( WD.toJSON( c ), function( err ){
+                        if( err ){
+                            next( err );
+                        }
+                        else {
+
+                            // 向内存中储存client
+                            SessionClientList[ sId ] = c;
+                            next( null, c, sId );
+                        }
+                    });
+                });
+            });
+        }
+        else {
+
+            var sessionId = clientInfo.sessionId;
+
+            // 先从内存中查找client
+            client = SessionClientList[ sessionId ];
+            if( client ){
+                return next( null, client, sessionId );
+            }
+
+            /**
+             * 如果给定了sessionId 但是内存只能怪没有，那么有可能是在会话进行中，server挂了（于是内存里的数据就丢失了）
+             * 因此我们从数据库中找找
+             */
+
+            else {
+                // 从session中获取session数据，重新实例化Client
+                new TestSession( sessionId, function( err, S ){
+                    if( err ){
+                        next( err );
+                    }
+                    else {
+                        // 获取client数据
+                        S.clientData(function( err, clientObj ){
+
+
+                            if( err ){
+                                next( err );
+                            }
+                            else if( clientObj ){
+                                client = WD.instantiate( clientObj );
+                                next( null, client, sessionId );
+                            }
+                            else {
+                                throw new Error( 'can\' find Client Data with: sessionId: ' + sessionId );
+                            }
+                        });
+                    }
+                });
+            }
+        }
     },
 
     /**
      * 创建一个新的会话
      * @param {Object} info 测试相关的信息
-     * @param next
+     * @param {String} info.browserName 测试相关的信息
+     * @param {Function} next callback
+     * @param {Client} next.client 创建的client实例对象
+     * @param {String} next.sessionId 新创建的会话Id
      * @private
      */
 
@@ -97,68 +164,96 @@ module.exports = {
 
     /**
      * 创建新的测试
-     * @param obj
-     * @param next
+     * @param {Object} obj
+     * @param {String} obj.url
+     * @param {String} obj.browserName
+     * @param {String} obj.sessionId
+     * @param {String} obj.winId
+     * @param {String} obj.code
+     * @param {String[]} obj.libs
+     * @param {Function} next callback
+     * @param {Object=null} next.err
+     * @param {String} next.sessionId
+     * @param {String} next.winId
      */
 
     newTest: function( obj, next ){
 
         var url = obj.url;
-        var browserName = obj.browserName;
-        var client = SessionClientList[ obj.sessionId ];
         var self = this;
         var testInfo = {
             sessionId: obj.sessionId,
             parentId: obj.winId,
             code: obj.code,
-            globalData: obj.globalData || {},
             libs: obj.libs
         };
 
-        // 如果已经存在会话
+        this.getClient({ sessionId: obj.sessionId, browserName: obj.browserName }, function( err, client, sId ){
 
-        if( client ){
-            self._runTest( client, url, testInfo, function( winId ){
-                next( testInfo.sessionId, winId );
-            });
-        }
-        else {
-
-            this._newSession({ browserName: browserName }, function( client, sessionId ){
-                SessionClientList[ sessionId ] = client;
-                testInfo.sessionId = sessionId;
+            if( err ){
+                next( err );
+            }
+            else {
+                testInfo.sessionId = sId;
                 self._runTest( client, url, testInfo, function( winId ){
-                    next( testInfo.sessionId, winId );
+                    next( null, sId, winId );
                 });
-            });
-        }
+            }
+        });
     },
 
     /**
      * 结束一个会话（end）
      * @param sessionId
-     * @param next
+     * @param {Function} next
+     * @param {Object=null} next.err
      */
     finishSession: function( sessionId, next ){
-        var client = SessionClientList[ sessionId ];
-        if( client ){
-            client.end(next);
 
-            // 释放
-            delete SessionClientList[ sessionId ];
-        }
-        else {
-            next();
-        }
+        this.getClient({ sessionId: sessionId }, function( err, client, sId ){
+
+            if( err ){
+                next( err );
+            }
+            else {
+                if( client ){
+                    client.end(function(){
+                        next( null );
+                    });
+
+                    // 释放
+                    delete SessionClientList[ sessionId ];
+                }
+                else {
+                    next( null );
+                }
+            }
+        });
     },
 
+    /**
+     * 关闭窗口
+     * @param {String} sessionId
+     * @param {String} winId
+     * @param {Function} next
+     * @param {Object=null} next.err
+     */
     closeWindow: function( sessionId, winId, next ){
-        var client = SessionClientList[ sessionId ];
-        if( client ){
-            client.closeWindow( winId, next );
-        }
-        else {
-            next();
-        }
+
+        this.getClient({ sessionId: sessionId }, function( err, client, sId ){
+            if( err ){
+                next( err );
+            }
+            else {
+                if( client ){
+                    client.closeWindow( winId, function(){
+                        next( null );
+                    });
+                }
+                else {
+                    next( null );
+                }
+            }
+        });
     }
 };

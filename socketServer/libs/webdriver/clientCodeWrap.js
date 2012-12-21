@@ -36,10 +36,6 @@ module.exports = function( args, done ){
 
         parentId: args.parentId,
 
-        // 全局数据
-
-        globalData: args.globalData,
-
         // 测试用例依赖的库
 
         libs: args.libs

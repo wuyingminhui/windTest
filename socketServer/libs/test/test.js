@@ -6,61 +6,51 @@
 
 var TestSession = require( '../redis/session' );
 var TestDriver = require( '../webdriver/webdriver' );
+var _ = require( 'underscore' );
 
 module.exports = {
 
     /**
-     * @name NewTestCallback
-     * @function
-     * @param {Object=null} err
-     * @param {Object} result
-     * @param {String} result.sessionId 会话sessionId
-     * @param {String} result.winId 新开的窗口ID
-     */
-
-    /**
      * 创建一个新的测试
-     * @param {Object} testInfo
-     * @param {String} testInfo.url 需要测试的页面地址
-     * @param {String} testInfo.browserName 需要测试的浏览器名称
-     * @param {String} testInfo.code 需要执行的用户测试用例
-     * @param {String} [testInfo.sessionId] 会话Id
-     * @param {String} [testInfo.winId] 窗口id
-     * @param {NewTestCallback} next
+     * @param {Object} config
+     * @param {String} config.url 需要测试的页面地址
+     * @param {String} config.browserName 需要测试的浏览器名称
+     * @param {String} config.code 需要执行的用户测试用例
+     * @param {String} [config.sessionId] 会话Id
+     * @param {String} [config.winId] 窗口id
+     * @param {Function} next callback
+     * @param {Object=null} next.err
+     * @param {Object} next.result 新测试信息
+     * @param {String} next.result.sessionId 当前会话Id
+     * @param {String} next.result.winId 新开窗口的sessionId
      */
 
-    newTest: function( testInfo, next ){
+    newTest: function( config, next ){
 
-        // 检查sessionId是否存在，如果存在，则查找当前的globalData
+        var testInfo = _.clone( config );
+
         if( testInfo.sessionId ){
+
             new TestSession( testInfo.sessionId, function( err, S ){
                 if( err ){
                     next( err );
                 }
                 else {
-                    S.globalData(function( err, g ){
+
+                    TestDriver.newTest( testInfo, function( err, sessionId, winId ){
+
                         if( err ){
                             next( err );
                         }
                         else {
-                            testInfo.globalData = g;
-                            TestDriver.newTest( testInfo, function( sessionId, winId ){
-
+                            // addWin
+                            S.addWin( winId, { parentId: testInfo.winId, stat: 'running' }, function( err ){
 
                                 if( err ){
                                     next( err );
                                 }
                                 else {
-                                    // addWin
-                                    S.addWin( winId, { parentId: testInfo.winId, stat: 'running' }, function( err ){
-
-                                        if( err ){
-                                            next( err );
-                                        }
-                                        else {
-                                            next( err, { sessionId: sessionId, winId: winId } );
-                                        }
-                                    });
+                                    next( err, { sessionId: sessionId, winId: winId } );
                                 }
                             });
                         }
@@ -69,74 +59,75 @@ module.exports = {
             });
         }
         else {
-            testInfo.globalData = {};
 
-            TestDriver.newTest( testInfo, function( sessionId, winId ){
+            TestDriver.newTest( testInfo, function( err, sessionId, winId ){
 
-                new TestSession( sessionId, function( err, S ){
+                if( err ){
+                    next( err );
+                }
+                else {
+                    new TestSession( sessionId, function( err, S ){
 
-                    if( err ){
-                        next( err );
-                    }
-                    else {
-                        // addWin
-                        S.addWin( winId, { parentId: testInfo.winId, stat: 'running' }, function( err ){
+                        if( err ){
+                            next( err );
+                        }
+                        else {
+                            // addWin
+                            S.addWin( winId, { parentId: testInfo.winId, stat: 'running' }, function( err ){
 
-                            if( err ){
-                                next( err );
-                            }
-                            else {
-                                next( err, { sessionId: sessionId, winId: winId } );
-                            }
-                        });
-                    }
-                });
+                                if( err ){
+                                    next( err );
+                                }
+                                else {
+                                    next( err, { sessionId: sessionId, winId: winId } );
+                                }
+                            });
+                        }
+                    });
+                }
             });
         }
     },
 
     /**
-     * @name GetAllTestResultCallback
-     * @function
-     * @param {Array} resultList
-     * @param {Array} resultList.winId
-     * @param {Array} resultList.testResult
-     */
-
-    /**
      * 获取会话中包含的所有的测试结果
      * @param {String} sessionId
-     * @param {GetAllTestResultCallback} next
+     * @param {Function} next callback
+     * @param {Object=null} next.err
+     * @param {Object[]} next.resultList 全部的测试结果
+     * @param {String} next.resultList[].winId
+     * @param {Object} next.resultList[].testResult
      */
 
     getAllTestResult: function( sessionId, next ){
 
         var resultList = [];
-        var session = new TestSession( sessionId, function(){
-            session.getAllWins(function( err, winList ){
-                winList.forEach(function( win ){
-                    resultList.push( win.testResult );
+        new TestSession( sessionId, function( err, S ){
+
+            if( err ){
+                next( err );
+            }
+            else {
+                S.getAllWins(function( err, winList ){
+
+                    if( err ){
+                        next( err );
+                    }
+
+                    else {
+                        winList.forEach(function( win ){
+                            resultList.push( win.testResult );
+                        });
+
+                        // 暂时先输出所有的窗口信息
+                        resultList = winList;
+
+                        next( null, resultList );
+                    }
                 });
-
-                // 暂时先输出所有的窗口信息
-                resultList = winList;
-
-                next( resultList );
-            });
+            }
         });
     },
-
-    /**
-     * @name FinishCallback
-     * @function
-     * @param {Object} result
-     * @param {String} result.sessionId
-     * @param {String} result.winId
-     * @param {Boolean} result.ifAllFinish 是否该会话下的所有窗口都测试完毕
-     * @param {Object} result.winResult 当前窗口的测试结果
-     * @param {Object} [result.allResult] 所有窗口的测试结果
-     * @param next
-     */
 
     /**
      * 当一次窗口的测试结束
@@ -144,7 +135,14 @@ module.exports = {
      * @param {String} testInfo.sessionId
      * @param {String} testInfo.winId
      * @param {Object} testInfo.testResult 该窗口中的测试结果
-     * @param {FinishCallback} next
+     * @param {Function} next callback
+     * @param {Object=null} next.err
+     * @param {Object} next.result 窗口测试的结果描述
+     * @param {String} next.result.sessionId
+     * @param {String} next.result.winId
+     * @param {Boolean} next.result.ifAllFinish 是否本次会话都结束了
+     * @param {Object} next.result.winResult 当前结束窗口的测试结果
+     * @param {Object[]} next.result.allResult 本次会话的所有测试结果
      */
 
     finish: function( testInfo, next ){
@@ -155,115 +153,146 @@ module.exports = {
         var testResult = testInfo.testResult;
         var self = this;
 
-        var session = new TestSession( sessionId, function(){
+        new TestSession( sessionId, function( err, S ){
 
-            // 储存测试结果
-            session.getWin( winId, function( err, winObj ){
-                winObj.testResult = testResult || {};
-                winObj.stat = 'done';
+            if( err ){
+                next( err );
+            }
+            else {
+                // 储存测试结果
+                S.getWin( winId, function( err, winObj ){
 
-
-                // 保存win数据
-                session.setWin( winId, winObj, function(){
-
-                    var parentId = winObj.parentId;
-
-                    if( parentId && parentId !== 'undefined' ){
-
-                        // 关闭当前window
-                        TestDriver.closeWindow( sessionId, winId, function(){
-                            next({
-                                sessionId: sessionId,
-                                winId: winId,
-                                ifAllFinish: false,
-                                winResult: testResult
-                            });
-                        });
+                    if( err ){
+                        next( err );
                     }
-
-                    // 如果parentId为空，则表示当前win就是父页面，则结束session
                     else {
+                        winObj.testResult = testResult || {};
+                        winObj.stat = 'done';
 
-                        // 获取所有的测试结果
-                        self.getAllTestResult( sessionId, function( resultList ){
-                            TestDriver.finishSession( sessionId, function(){
-                                next({
-                                    sessionId: sessionId,
-                                    winId: winId,
-                                    ifAllFinish: true,
-                                    allResult: resultList,
-                                    winResult: testResult
-                                });
+                        // 保存win数据
+                        S.setWin( winId, winObj, function( err ){
 
-                                // 销毁session数据
-                                session.destroy();
-                            } );
+                            if( err ){
+                                next( err );
+                            }
+                            else {
+                                var parentId = winObj.parentId;
+
+                                if( parentId && parentId !== 'undefined' ){
+
+                                    // 关闭当前window
+                                    TestDriver.closeWindow( sessionId, winId, function( err ){
+                                        if( err ){
+                                            next( err );
+                                        }
+                                        else {
+                                            next( null, {
+                                                sessionId: sessionId,
+                                                winId: winId,
+                                                ifAllFinish: false,
+                                                winResult: testResult
+                                            });
+                                        }
+                                    });
+                                }
+
+                                // 如果parentId为空，则表示当前win就是父页面，则结束session
+                                else {
+
+                                    // 获取所有的测试结果
+                                    self.getAllTestResult( sessionId, function( err, resultList ){
+
+                                        if( err ){
+                                            next( err );
+                                        }
+                                        else {
+                                            TestDriver.finishSession( sessionId, function( err ){
+
+                                                if( err ){
+                                                    next( err );
+                                                }
+                                                else {
+                                                    next( null, {
+                                                        sessionId: sessionId,
+                                                        winId: winId,
+                                                        ifAllFinish: true,
+                                                        allResult: resultList,
+                                                        winResult: testResult
+                                                    });
+                                                }
+
+                                                // 销毁session数据
+                                                S.destroy();
+                                            } );
+                                        }
+                                    });
+                                }
+                            }
                         });
                     }
                 });
-            });
+            }
         });
     },
-
-    /**
-     * @name GetGlobalDataCallback
-     * @function
-     * @param {Object=null}  err
-     * @param {Object} globalData
-     */
 
     /**
      * 获取全局数据
      * @param sessionId
-     * @param {GetGlobalDataCallback} next
+     * @param {Function} next callback
+     * @param {Object=null} next.err
+     * @param {Object} next.globalData 全局数据
      */
 
     getGlobalData: function( sessionId, next ){
-        var session = new TestSession( sessionId, function(){
-
-            session.globalData( next );
+        var session = new TestSession( sessionId, function( err, S ){
+            if( err ){
+                next( err );
+            }
+            else {
+                S.globalData( next );
+            }
         });
     },
-
-    /**
-     * @name SetGlobalDataCallback
-     * @function
-     * @param {Object=null}  err
-     * @param {Object} globalData
-     */
 
     /**
      * 设置全局数据
      * @param sessionId
      * @param {Object} data
-     * @param {SetGlobalDataCallback} next
+     * @param {Function} next callback
+     * @param {Object=null} next.err
+     * @param {Object} next.globalData 全局数据
      */
 
     setGlobalData: function( sessionId, data, next ){
 
-        var session = new TestSession( sessionId, function(){
+        var session = new TestSession( sessionId, function( err, S ){
 
-            session.globalData( function( err, d ){
+            if( err ){
+                next( err );
+            }
+            else {
+                S.globalData( function( err, d ){
 
-                if( err ){
-                    next( err );
-                }
-                else {
-                    var key;
-                    for( key in data ){
-                        d[ key ] = data[ key ];
+                    if( err ){
+                        next( err );
                     }
+                    else {
+                        var key;
+                        for( key in data ){
+                            d[ key ] = data[ key ];
+                        }
 
-                    session.setGlobalData( d, function( err ){
-                        if( err ){
-                            next( err );
-                        }
-                        else {
-                            next( null, d );
-                        }
-                    });
-                }
-            } );
+                        S.setGlobalData( d, function( err ){
+                            if( err ){
+                                next( err );
+                            }
+                            else {
+                                next( null, d );
+                            }
+                        });
+                    }
+                });
+            }
         });
     }
 };

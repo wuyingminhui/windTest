@@ -51,7 +51,7 @@ var SOCKET_API = {
 
     TEST_FINISH: function( info ){
 
-        Test.finish( info, function( ret ){
+        Test.finish( info, function( err, ret ){
 
             var sessionId = ret.sessionId;
             var callback;

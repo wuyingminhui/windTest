@@ -45,6 +45,32 @@ describe('Session Test', function(){
         });
     });
 
+    it( '#clientData()', function( done ){
+
+        // 默认的话应该是不存在clientData值的
+        sessionIst.clientData(function( err, c){
+
+            assert.equal( undefined, c );
+
+            var newClientData = {
+                sessionId: '2897980098',
+                desiredCapabilities: {
+                    browserName: 'chrome'
+                }
+            };
+
+            // 设置新值
+            sessionIst.setClientData( newClientData, function( err ){
+
+                sessionIst.clientData( function( err, d ){
+
+                    // 检验是否设置成功
+                    assert.deepEqual( d, newClientData );
+                    done();
+                });
+            });
+        });
+    });
 
     it( '#globalData()', function( done ){
 
