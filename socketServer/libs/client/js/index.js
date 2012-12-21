@@ -2,36 +2,90 @@
  * 客户端接口API库
  * 用于实现测试用例中的open、run
  */
-debugger;
-alert(123);
 (function (win) {
+
+    /**
+     * 载入依赖的脚本
+     */
     _loadScript('http://localhost:3000/js/libs/SyncRun/EventEmitter.js', function () {
         _loadScript('http://localhost:3000/js/libs/SyncRun/SyncRun.js', function () {
             _loadScript('http://localhost:3000/js/libs/socket.io/socket.io.js', function () {
-                var UT = win.UT = {};
-debugger;
+
                 var Socket = io.connect('http://localhost:3000');
+                var UT = win.UT = {};
                 var Config;
 
                 //初始化SyncRun
                 var SyncMethod = SyncRun.newQueue();
-                var Do = SyncMethod(function ( next ){
-                    next();
+
+                /**
+                 * 同步队列方法
+                 * @param {Function} fn 需要执行的方法
+                 * @example
+                 * ```
+                 *      var queue = [];
+                 *
+                 *      Do(function( done ){
+                 *          setTimeout(function(){
+                 *              queue.push( 'a' );
+                 *              done();
+                 *          }, 5000 );
+                 *      });
+                 *
+                 *      Do(function( done ){
+                 *          queue.push( 'b' );
+                 *          done();
+                 *      });
+                 *
+                 *      Do(function( done ){
+                 *          console.log( queue.join( '' ) == 'ab' ) // => true
+                 *          done();
+                 *      });
+                 *
+                 * ```
+                 */
+                var Do = function( fn ){
+                    _Do( fn, function(){});
+                };
+
+                var _Do = SyncMethod(function( body, next ){
+                    body( next );
                 });
 
                 /**
                  * 获取全局的测试数据
-                 * 由于Selenium会在页面onLoad时才植入代码，因此这里不一定马上能得到
                  * todo 检查配置信息丢失异常
                  */
                 var NAMESPACE = '__WIND_TEST_CONFIG';
                 Config = window[ NAMESPACE ];
 
-                UT.open = function (url, exeFunc, cb) {
-                    Do(function(){
+                /**
+                 * 开新窗口执行测试
+                 * @param {String} url 需要测试的页面地址
+                 * @param {Function} exeFunc 测试用例的函数
+                 */
+                UT.open = function (url, exeFunc ){
+
+                    Do(function( done ){
+
+                        // 创建新测试
                         newTest(url, exeFunc, function(ret){
-                            waitTestFinish(ret.winId, _finished);
+
+                            // 新测试请求后向服务器请求，当该测试完成时执行回调
+                            waitTestFinish(ret.winId, function(){
+                                done();
+                            });
                         });
+                    });
+                };
+
+                /**
+                 * 完成当前页面的测试
+                 * @param {Object} result 需要返回给server的测试用例
+                 */
+                UT.done = function( result ){
+                    Do(function(){
+                        finishTest( result );
                     });
                 };
 
