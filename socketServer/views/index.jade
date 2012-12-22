@@ -21,20 +21,28 @@ block content
             div.control-group
                 lable.control-label 用例代码
                 div.controls
-                    textarea.J_TestCode
-                        |UT.open('http://g.cn', function(){
-                        |    alert( 'Hello Google' );
-                        |    UT.open( 'http://m.qq.com', function(){
-                        |        alert( 'Hello QQ!' );
-                        |        UT.done( { result: 'QQ is Fantasy'} );
-                        |        });
-                        |    UT.done({ result: 'Google is nice'});
-                        |    });
-                        |UT.open( 'http://m.baidu.com', function(){
-                        |    alert( 'hello baidu' );
-                        |    UT.done({ result: 'Baidu is good!'});
-                        |    });
-                        |UT.done({ result: 'allTestDone'} );
+                    div.test-code-con
+                        div.test-code-wrap
+                            div.J_TestCode.test-code
+                                |UT.open('http://g.cn', function(){
+
+                                |    alert( 'Hello Google' );
+
+                                |    UT.open( 'http://m.qq.com', function(){
+
+                                |        alert( 'Hello QQ!' );
+                                |        UT.done( { result: 'QQ is Fantasy'} );
+                                |    });
+
+                                |    UT.done({ result: 'Google is nice'});
+                                |});
+
+                                |UT.open( 'http://m.baidu.com', function(){
+                                |    alert( 'hello baidu' );
+                                |    UT.done({ result: 'Baidu is good!'});
+                                |});
+
+                                |UT.done({ result: 'allTestDone'} );
             div.control-group
                 div.controls
                     button.btn.btn-primary.J_TestRun 测试
@@ -54,4 +62,5 @@ block content
     // Javascript
     script(src="/javascripts/libs/socket.io/socket.io.js")
     script(src="/javascripts/libs/jquery-1.8.3-min.js")
+    script(src="http://d1n0x3qji82z53.cloudfront.net/src-min-noconflict/ace.js")
     script(src="/javascripts/index.js")

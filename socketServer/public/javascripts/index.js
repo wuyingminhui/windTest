@@ -2,12 +2,15 @@ var socket = io.connect();
 
 $(document).ready(function(){
 
-    var IORes = $( '.J_Response' );
-
     var TESTURL = $( '.J_TestURL' );
     var TESTBrowser = $( '.J_TestBrowser' );
     var TESTCode = $( '.J_TestCode' );
     var TestTrigger = $( '.J_TestRun' );
+
+    // 初始化ACE
+    var editor = ace.edit( TESTCode.get(0) );
+    editor.setTheme("ace/theme/monokai");
+    editor.getSession().setMode("ace/mode/javascript");
 
     // 启动新测试
     TestTrigger.bind( 'click', function( event ){
@@ -16,7 +19,7 @@ $(document).ready(function(){
         var testObj = {
             url: TESTURL.val(),
             browserName: TESTBrowser.val(),
-            code: TESTCode.val()
+            code: editor.getSession().getValue()
         };
 
         // 发送一个新测试请求
