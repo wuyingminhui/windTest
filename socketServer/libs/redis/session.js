@@ -247,6 +247,58 @@ Session.prototype = {
     },
 
     /**
+     * 获取指定窗口执行过程中产生的页面错误
+     * @param {String} winId
+     * @param {Function} next calxlback
+     * @param {Object=null} next.err
+     * @param {Object[]} next.errors
+     */
+
+    errors: function( winId, next ){
+        this.getWin( winId, function( err, winObj ){
+
+            if( err ){
+                next( err );
+            }
+            else {
+                var errors;
+                if( winObj ){
+                    errors = JSON.parse( winObj.errors );
+                }
+                next( null, errors );
+            }
+        });
+    },
+
+    /**
+     * 设置某个页面的错误数据
+     * @param {String} winId
+     * @param {Object[]} errorList
+     * @param {Function} next callback
+     * @param {Object=null} next.err
+     */
+
+    setErrors: function( winId, errorList, next ){
+        var self = this;
+
+        this.getWin( winId, function( err, winObj ){
+            if( err ){
+                next( err );
+            }
+            else {
+
+                if( !winObj ){
+                    winObj = {};
+                }
+                winObj.errors = errorList;
+                self.setWin( winId, winObj, next );
+                // 设置超时
+                self.setExpire();
+            }
+        });
+    },
+
+    /**
      * 添加一个测试win
      * @param id
      * @param {Object} winObj 测试window信息
@@ -393,7 +445,6 @@ Session.prototype = {
 
         Client.keys( '*', function( err, keys ){
             keys.splice( 0, 0, self.sessionKey );
-//            keys.push(  );
             Client.del.apply( Client, keys );
         });
     },

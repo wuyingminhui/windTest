@@ -5,7 +5,7 @@ var Config = require( './config.json' );
 describe('Session Test', function(){
 
     var sessionIst;
-    var sessionId = '__REDIS_WIN_TEST_SESSIONID__';
+    var sessionId = generateSessionId();
     var winList = [ 16, 17, 18 ];
 
     it( 'Static Method #sessionId(), #keyToSessionId()', function(){
@@ -53,7 +53,7 @@ describe('Session Test', function(){
             assert.equal( undefined, c );
 
             var newClientData = {
-                sessionId: '2897980098',
+                sessionId: sessionId,
                 desiredCapabilities: {
                     browserName: 'chrome'
                 }
@@ -107,7 +107,7 @@ describe('Session Test', function(){
          */
 
         var winInfo = {
-            parentId: '22',
+            parentId: generateWinId(),
             stat: 'running',
             winId: winId
         };
@@ -123,7 +123,7 @@ describe('Session Test', function(){
 
                     sessionIst.getWin( winId, function( err, w ){
                         var expectWinObj = {
-                            parentId: '22',
+                            parentId: winInfo.parentId,
                             stat: stat,
                             winId: winId
                         };
@@ -138,7 +138,7 @@ describe('Session Test', function(){
     it( '#getAllWinIds(), #getAllWin', function( done ){
 
         // addAllWin
-        var parentId = 14;
+        var parentId = generateWinId();
 
         function addWinList( list, index, next ){
             index = ( typeof index == 'undefined' ? 0 : index );
@@ -181,9 +181,9 @@ describe('Session Test', function(){
 
     it( '#removeWin()', function( done ){
 
-        var newWinId = 55;
+        var newWinId = generateWinId();
         var winInfo = {
-            parentId: 56
+            parentId: generateWinId()
         };
         sessionIst.addWin( newWinId, winInfo, function( err ){
 
@@ -204,10 +204,56 @@ describe('Session Test', function(){
         });
     });
 
+    it( '#errors(), #setErrors()', function( done ){
+
+        /**
+         * 注意到，Redis中的基本数值都是String
+         */
+
+        var winId = generateWinId();
+        var winInfo = {
+            parentId: generateWinId(),
+            stat: 'running',
+            winId: winId
+        };
+        var errorList = [
+            {
+                mode: 'typeError',
+                context: 'this is context',
+                stack: [
+                    {
+                        url: 'error url',
+                        no: 12,
+                        msg: 'a is undefined'
+                    }
+                ]
+            }
+        ];
+
+        // Add a new window
+        sessionIst.addWin( winId, winInfo, function(){
+
+            // Set errors info.
+            sessionIst.setErrors( winId, errorList, function( err ){
+
+                // Get errors info.
+                sessionIst.errors( winId, function( err, errList ){
+                    assert.deepEqual( errorList, errList );
+
+                    // Remove the window info.
+                    sessionIst.removeWin( winId, function( err ){
+                        done();
+                    });
+                });
+            });
+        });
+
+    });
+
     it('#expire normal', function( done ){
 
 
-        var newSessionId = '__REDIS_WIN_TEST_SESSIONID_EXPIRE_';
+        var newSessionId = generateSessionId();
         // 添加一个
         var newSession = new SessionMgr( newSessionId, function(){
 
@@ -241,7 +287,7 @@ describe('Session Test', function(){
 
     it( '#expire active',function( done ){
 
-        var newSessionId = '__REDIS_WIN_TEST_SESSIONID_EXPIRE_';
+        var newSessionId = generateSessionId();
         // 添加一个
         var newSession = new SessionMgr( newSessionId, function(){
 
@@ -299,3 +345,21 @@ describe('Session Test', function(){
         });
     });
 });
+
+/**
+ * 生成一个唯一的sessionId
+ * @return {string}
+ */
+
+function generateSessionId(){
+    return '__REDIS_WIN_TEST_SESSIONID__' + Date.now() +( Math.random() * 100000 ).toFixed( 0 );
+}
+
+/**
+ * 生成一个唯一的winId
+ * @return {string}
+ */
+
+function generateWinId(){
+    return '__REDIS_WIN_TEST_WINID__' + Date.now() +( Math.random() * 100000 ).toFixed( 0 );
+}

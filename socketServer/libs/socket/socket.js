@@ -169,7 +169,7 @@ var SOCKET_API = {
      * 一次测试出现错误:
      */
 
-    TEST_ERROR: function( err ){
+    TEST_ERROR: function( errInfo, next ){
 
     }
 };
