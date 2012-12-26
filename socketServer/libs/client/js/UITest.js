@@ -125,7 +125,6 @@
 
                         // 新测试请求后向服务器请求
                         self._waitTestFinish( ret.data.winId, function(){
-                            alert( 'child over!' );
                             done();
                         });
                     }
@@ -149,7 +148,6 @@
             var self = this;
 
             this._Do(function( done ){
-                alert( 'done!' );
                 self._finishTest( result );
                 done();
             });
@@ -415,7 +413,7 @@
         _reportTestError: function( errData, next ){
             this._request( MSG_TYPE.TEST_ERROR, { errorInfo: errData }, function ( ret ) {
                 if ( ret.success ) {
-                    alert( 'server receive!' );
+                    // todo do something ?
                 }
                 else {
                     alert( JSON.stringify( ret.err ) || '提交脚本错误失败!' );
