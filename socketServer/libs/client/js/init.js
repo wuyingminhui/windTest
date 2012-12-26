@@ -18,4 +18,6 @@ function init(){
     // 关联上session，pageId等信息
     // 通信
     WinTest.MsgManager.connect();
+
+    // commit test
 }

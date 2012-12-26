@@ -3,6 +3,7 @@
  */
 
 ;(function(){
+
     var WIN = this;
 
     if( WIN.UT ){
@@ -335,17 +336,7 @@
          */
 
         _testCodeWrap: function( exeFunc ){
-            var str = ';(' +exeFunc.toString() + ')();';
-            str += ''+
-            '(function() {'+
-                'var jasmineEnv = jasmine.getEnv();'+
-                'jasmineEnv.updateInterval = 1000;'+
-                'var trivialReporter = new jasmine.ConsoleReporter();'+
-                'jasmineEnv.addReporter(trivialReporter);'+
-                'jasmineEnv.execute();'+
-            '})();';
-            str += 'UT.done({"feeqi_test": 3.1415926});';
-            return str;
+            return ';(' +exeFunc.toString() + ')();';
         },
 
         /**
