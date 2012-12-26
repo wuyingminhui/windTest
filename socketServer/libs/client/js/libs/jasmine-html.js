@@ -585,4 +585,4 @@ jasmine.JsonReporter = function (callback) {
     return self;
 }
 
-jasmine.HtmlReporterHelpers.addHelpers(jasmine.JsonReporter);
+jasmine.HtmlReporterHelpers.addHelpers(jasmine.HtmlReporter);

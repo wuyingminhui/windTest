@@ -27,12 +27,12 @@
         'http://localhost:3000/js/libs/jquery.tmpl.js',
         'http://localhost:3000/js/libs/json.js',
         'http://localhost:3000/js/libs/jasmine.js',
-        'http://localhost:3000/js/libs/jasmine-html.js',
+        'http://localhost:3000/js/libs/jasmine.UTReporter.js',
         'http://localhost:3000/js/libs/simulate.js',
         'http://localhost:3000/js/libs/matcher.js',
-        'http://localhost:3000/js/libs/taobao.js',
+        'http://localhost:3000/js/UITest.js',
+        'http://localhost:3000/js/libs/taobao.js'
 
-        'http://localhost:3000/js/UITest.js'
     ], function () {
 
         if( 'undefined' === typeof UT ){
@@ -50,32 +50,29 @@
      * @param callback
      * @private
      */
-
     function _loadScript(url, callback) {
-
+        var script_url,onLoadCallback;
         if( typeof url == 'string' ){
-            url = [ url ];
+            onLoadCallback = callback;
+            script_url = url;
+        }else if(typeof url == 'object'){
+            script_url = url.shift();
+            if(url.length != 0){
+                onLoadCallback = function(){
+                    _loadScript(url, callback);
+                };
+            }else{
+                onLoadCallback = callback;
+            }
         }
 
-        var scriptLen = url.length;
-        var scriptCount = 0;
-        var script;
-        var index;
-        var onLoadCallback = function(){
-            if( ++scriptCount == scriptLen ){
-                callback();
-            }
-        };
-
-        for( index = 0; url[ index ]; index++ ){
-
+        if(script_url){
             script = document.createElement('script');
             script.type = 'text/javascript';
             script.async = true;
-            script.onload = onLoadCallback;
-            script.src = url[ index ];
+            if(onLoadCallback) script.onload = onLoadCallback;
+            script.src = script_url;
             document.head.appendChild(script);
         }
     }
-
 })();
