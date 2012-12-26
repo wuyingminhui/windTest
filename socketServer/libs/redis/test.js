@@ -216,29 +216,27 @@ describe('Session Test', function(){
             stat: 'running',
             winId: winId
         };
-        var errorList = [
-            {
-                mode: 'typeError',
-                context: 'this is context',
-                stack: [
-                    {
-                        url: 'error url',
-                        no: 12,
-                        msg: 'a is undefined'
-                    }
-                ]
-            }
-        ];
+        var newError = {
+            mode: 'typeError',
+            context: 'this is context',
+            stack: [
+                {
+                    url: 'error url',
+                    no: 12,
+                    msg: 'a is undefined'
+                }
+            ]
+        };
 
         // Add a new window
         sessionIst.addWin( winId, winInfo, function(){
 
             // Set errors info.
-            sessionIst.setErrors( winId, errorList, function( err ){
+            sessionIst.addError( winId, newError, function( err ){
 
                 // Get errors info.
                 sessionIst.errors( winId, function( err, errList ){
-                    assert.deepEqual( errorList, errList );
+                    assert.deepEqual( [newError], errList );
 
                     // Remove the window info.
                     sessionIst.removeWin( winId, function( err ){

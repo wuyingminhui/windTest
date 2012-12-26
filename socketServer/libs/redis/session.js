@@ -271,14 +271,14 @@ Session.prototype = {
     },
 
     /**
-     * 设置某个页面的错误数据
+     * 为指定页面添加一条错误记录
      * @param {String} winId
-     * @param {Object[]} errorList
+     * @param {Object} errorInfo
      * @param {Function} next callback
      * @param {Object=null} next.err
      */
 
-    setErrors: function( winId, errorList, next ){
+    addError: function( winId, errorInfo, next ){
         var self = this;
 
         this.getWin( winId, function( err, winObj ){
@@ -290,7 +290,12 @@ Session.prototype = {
                 if( !winObj ){
                     winObj = {};
                 }
-                winObj.errors = errorList;
+
+                if( !winObj.errors ){
+                    winObj.errors = [];
+                }
+
+                winObj.errors.push( errorInfo );
                 self.setWin( winId, winObj, next );
                 // 设置超时
                 self.setExpire();

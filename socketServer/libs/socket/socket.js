@@ -30,13 +30,27 @@ var SOCKET_API = {
     /**
      * 新测试到来
      * @param testData
-     * @param next
+     * @param {Function} next
+     * @param {Object=null} next.err
+     * @param {Object} next.data 新测试信息
+     * @param {String} next.data.sessionId 当前会话Id
+     * @param {String} next.data.winId 新开窗口的sessionId
      */
 
     NEW_TEST: function( testData, next ){
-        Test.newTest( testData, function( err, obj ){
-            // 讲新建的窗口Id返回给父窗口
-            next( obj );
+        Test.newTest( testData, function( err, result ){
+            if( err ){
+                next({
+                    success: false,
+                    err: err
+                });
+            }
+            else {
+                next({
+                    success: true,
+                    data: result
+                })
+            }
         });
     },
 
@@ -53,29 +67,40 @@ var SOCKET_API = {
 
         Test.finish( info, function( err, ret ){
 
-            var sessionId = ret.sessionId;
-            var callback;
+            // todo handle这块的异常
+            if( err ){
+                new Error( err );
+            }
+            else {
+                var sessionId = ret.sessionId;
+                var callback;
 
-            // 检查是否所有测试都结束了，否则通知其父页面
-            if( !ret.ifAllFinish ){
-                // 通知parent window
-                var winId = ret.winId;
+                // 检查是否所有测试都结束了，否则通知其父页面
+                if( !ret.ifAllFinish ){
+                    // 通知parent window
+                    var winId = ret.winId;
 
-                if( TestFinishCallback[ sessionId ] ){
-                    callback = TestFinishCallback[ sessionId ][ winId ];
-                    if( typeof callback == 'function' ){
-                        callback( ret );
-                        delete TestFinishCallback[ sessionId ][ winId ];
+                    if( TestFinishCallback[ sessionId ] ){
+                        callback = TestFinishCallback[ sessionId ][ winId ];
+                        if( typeof callback == 'function' ){
+                            callback( {
+                                success: true,
+                                data: ret
+                            });
+                            delete TestFinishCallback[ sessionId ][ winId ];
+                        }
                     }
                 }
-            }
 
-            // 若所有测试完毕
-            else {
-
-                callback = AllTestFinishCallback[ sessionId ];
-                if( typeof callback == 'function' ){
-                    callback( ret.allResult );
+                // 若所有测试完毕
+                else {
+                    callback = AllTestFinishCallback[ sessionId ];
+                    if( typeof callback == 'function' ){
+                        callback({
+                            success: true,
+                            data: ret.allResult
+                        });
+                    }
                 }
             }
         });
@@ -100,7 +125,7 @@ var SOCKET_API = {
      * 请求监听某个测试窗口，当其完成时，讲执行next
      * @param {Object} info
      * @param {String} info.sessionId
-     * @param {String} info.winId
+     * @param {String} info.targetWinId
      * @param {Function} next callback
      * @param {Object} next.info
      * @param {String} next.info.sessionId
@@ -113,7 +138,7 @@ var SOCKET_API = {
 
         // 获取相关信息
         var sessionId = info.sessionId;
-        var winId = info.winId;
+        var winId = info.targetWinId;
         if( !TestFinishCallback[ sessionId ] ){
             TestFinishCallback[ sessionId ] = {};
         }
@@ -144,7 +169,7 @@ var SOCKET_API = {
             Test.getGlobalData( sessionId, function( err, data ){
                 next({
                     success: err === null,
-                    error: err,
+                    err: err,
                     data: data
                 });
             });
@@ -153,7 +178,7 @@ var SOCKET_API = {
             Test.setGlobalData( sessionId, data, function( err, data ){
                 next({
                     success: err === null,
-                    error: err,
+                    err: err,
                     data: data
                 });
             });
@@ -169,8 +194,21 @@ var SOCKET_API = {
      * 一次测试出现错误:
      */
 
-    TEST_ERROR: function( errInfo, next ){
+    TEST_ERROR: function( req, next ){
 
+        Test.saveError( req.sessionId, req.winId, req.errorInfo, function( err ){
+            if( err ){
+                next({
+                    success: false,
+                    err: err
+                });
+            }
+            else {
+                next({
+                    success: true
+                });
+            }
+        });
     }
 };
 

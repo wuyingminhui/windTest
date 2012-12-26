@@ -294,5 +294,34 @@ module.exports = {
                 });
             }
         });
+    },
+
+    /**
+     * 为指定会话中的指定窗口添加一条错误记录
+     * @param sessionId
+     * @param winId
+     * @param {Object} errorInfo
+     * @param {Function} next callback
+     * @param {Object=null} next.err
+     */
+
+    saveError: function( sessionId, winId, errorInfo, next ){
+
+        new TestSession( sessionId, function( err, S ){
+
+            if( err ){
+                next( err );
+            }
+            else {
+                S.addError( winId, errorInfo, function( err ){
+                    if( err ){
+                        next( err );
+                    }
+                    else {
+                        next( null );
+                    }
+                });
+            }
+        });
     }
 };

@@ -23,27 +23,38 @@ $(document).ready(function(){
         };
 
         // 发送一个新测试请求
-        socket.emit( 'NEW_TEST', testObj, function( testInfo ){
-            // 订阅所有测试完成事件
-            socket.emit( 'WAIT_ALL_TEST', testInfo, function( testResult ){
+        socket.emit( 'NEW_TEST', testObj, function( ret ){
 
-                console.log( 'TEST FINISH: ', testResult );
-                var index
-                    , value
-                    , winId
-                    , result
-                    , HTML = '';
+            if( ret.success ){
+                // 订阅所有测试完成事件
+                socket.emit( 'WAIT_ALL_TEST', ret.data, function( ret ){
 
-                for( index = 0; value = testResult[ index]; index++ ){
-                    winId = value[ 'winId' ];
-                    result = value[ 'testResult' ];
+                    if( ret.success ){
+                        var testResult = ret.data;
+                        var index
+                            , value
+                            , winId
+                            , result
+                            , HTML = '';
 
-                    HTML += '<tr><td>' + winId + '</td><td>' + result + '</td></tr>';
-                }
+                        for( index = 0; value = testResult[ index]; index++ ){
+                            winId = value[ 'winId' ];
+                            result = value[ 'testResult' ];
 
-                // 清空当前的数据
-                $( '.J_TestResultTable tbody').append( HTML );
-            });
+                            HTML += '<tr><td>' + winId + '</td><td>' + result + '</td></tr>';
+                        }
+
+                        // 清空当前的数据
+                        $( '.J_TestResultTable tbody').append( HTML );
+                    }
+                    else {
+                        new Error( ret.err );
+                    }
+                });
+            }
+            else {
+                new Error( ret.err );
+            }
         });
     });
 });

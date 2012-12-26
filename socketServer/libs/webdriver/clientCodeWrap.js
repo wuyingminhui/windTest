@@ -38,7 +38,10 @@ module.exports = function( args, done ){
 
         // 测试用例依赖的库
 
-        libs: args.libs
+        libs: args.libs,
+
+        // 服务器 host
+        server: 'http://localhost:3000'
 
     };
 
