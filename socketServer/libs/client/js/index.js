@@ -22,16 +22,10 @@
         'http://localhost:3000/js/libs/Do.js',
         'http://localhost:3000/js/libs/socket.io/socket.io.js',
         'http://localhost:3000/js/libs/traceKit.js',
-
         'http://localhost:3000/js/libs/jquery-1.7.2.min.js',
         'http://localhost:3000/js/libs/jquery.tmpl.js',
         'http://localhost:3000/js/libs/json.js',
-        'http://localhost:3000/js/libs/jasmine.js',
-        'http://localhost:3000/js/libs/jasmine.UTReporter.js',
-        'http://localhost:3000/js/libs/simulate.js',
-        'http://localhost:3000/js/libs/matcher.js',
-        'http://localhost:3000/js/UITest.js',
-        'http://localhost:3000/js/libs/taobao.js'
+        'http://localhost:3000/js/UITest.js'
 
     ], function () {
 
@@ -67,7 +61,7 @@
         }
 
         if(script_url){
-            script = document.createElement('script');
+            var script = document.createElement('script');
             script.type = 'text/javascript';
             script.async = true;
             if(onLoadCallback) script.onload = onLoadCallback;

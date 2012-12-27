@@ -25,21 +25,18 @@ block content
                         div.test-code-wrap
                             div.J_TestCode.test-code
                                 |UT.open('http://g.cn', function(){
-
-                                |    alert( 'Hello Google' );
-
-                                |    UT.open( 'http://m.qq.com', function(){
-
-                                |        alert( 'Hello QQ!' );
-                                |        UT.done( { result: 'QQ is Fantasy'} );
-                                |    });
-
-                                |    UT.done({ result: 'Google is nice'});
+                                |   describe( 'desc', function(){
+                                |       it( 'it', function(){
+                                |           expect( 1 ).toBe( 1 );
+                                |       });
+                                |   });
                                 |});
-
                                 |UT.open( 'http://m.baidu.com', function(){
-                                |    alert( 'hello baidu' );
-                                |    UT.done({ result: 'Baidu is good!'});
+                                |   describe( 'desc2', function(){
+                                |       it( 'it2', function(){
+                                |           expect( 1 ).toBe( 1 );
+                                |       });
+                                |   });
                                 |});
 
                                 |UT.done({ result: 'allTestDone'} );
