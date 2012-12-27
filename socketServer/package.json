@@ -10,6 +10,7 @@
         "jade": "*",
         "redis": "*",
         "webdriverNode": "0.0.12",
-        "socket.io": "*"
+        "socket.io": "*",
+        "uglify-js": "1.x"
     }
 }

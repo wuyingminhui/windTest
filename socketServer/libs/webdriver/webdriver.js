@@ -5,6 +5,7 @@
 var WD = require( 'webdriverNode' );
 var TestSession = require( '../redis/session' );
 var ClientCodeWrap = require( './clientCodeWrap' );
+var Compress = require( './compress' );
 
 /**
  * 用于储存运行中的Client
@@ -128,6 +129,11 @@ module.exports = {
      */
 
     _runTest: function( client, url, obj, next ){
+
+        // 对用户的测试用例做非ASCII 转化为 Unicode 处理
+        if( obj.code ){
+            obj.code = Compress( obj.code );
+        }
 
         /**
          * 通过parentId是否存在来检查是否为第一次，如果为第一次，使用URL，否则新建窗口
