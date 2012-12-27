@@ -6,6 +6,38 @@
 
     var WIN = this;
 
+    /**
+     * 加载脚本
+     * @param {String|String[]} url
+     * @param callback
+     * @private
+     */
+    function _loadScript(url, callback) {
+        var script_url,onLoadCallback;
+        if( typeof url == 'string' ){
+            onLoadCallback = callback;
+            script_url = url;
+        }else if(typeof url == 'object'){
+            script_url = url.shift();
+            if(url.length != 0){
+                onLoadCallback = function(){
+                    _loadScript(url, callback);
+                };
+            }else{
+                onLoadCallback = callback;
+            }
+        }
+
+        if(script_url){
+            var script = document.createElement('script');
+            script.type = 'text/javascript';
+            script.async = true;
+            if(onLoadCallback) script.onload = onLoadCallback;
+            script.src = script_url;
+            document.head.appendChild(script);
+        }
+    }
+
     if( WIN.UT ){
         WIN._UT = WIN.UT;
     }
@@ -47,6 +79,27 @@
          */
 
         _testInfo: {},
+
+        /**
+         * 使用的测试框架
+         * todo 支持mocha
+         */
+
+        _testFrameworkLibs: {
+            jasmine: [
+                'http://localhost:3000/js/libs/jasmine.js',
+                // 在控制台中输出结果，用于调试
+                'http://localhost:3000/js/libs/jasmine.UTReporter.js',
+                // html测试结果，以及获取结果
+                'http://localhost:3000/js/libs/jasmine-html.js',
+                'http://localhost:3000/js/libs/simulate.js',
+                'http://localhost:3000/js/libs/matcher.js',
+                'http://localhost:3000/js/libs/taobao.js'
+            ],
+            mocha: []
+        },
+
+        _testFramework: 'jasmine',
 
         /**
          * socket.io
@@ -103,7 +156,9 @@
                 self._testInfo = Config;
                 self._socketInit();
                 self._traceKitInit();
-                self._runTest( Config.code );
+                self._initTestFramework(function(){
+                    self._runTest( Config.code );
+                });
             });
         },
 
@@ -125,7 +180,6 @@
 
                         // 新测试请求后向服务器请求
                         self._waitTestFinish( ret.data.winId, function(){
-                            alert( 'child over!' );
                             done();
                         });
                     }
@@ -149,7 +203,6 @@
             var self = this;
 
             this._Do(function( done ){
-                alert( 'done!' );
                 self._finishTest( result );
                 done();
             });
@@ -264,13 +317,57 @@
         },
 
         /**
+         * 加载使用的测试框架需要的脚本
+         * @param next
+         * @private
+         */
+
+        _initTestFramework: function( next ){
+
+            var libs = this._testFrameworkLibs[ this._testFramework || 'jasmine' ];
+            if( libs ){
+                _loadScript( libs, next );
+            }
+            else {
+                next();
+            }
+        },
+
+        /**
          * 执行测试用例
          * @param {String} code
          * @private
          */
 
         _runTest: function( code ){
-            eval.call( WIN, code );
+
+            var framework = this._testFramework;
+            var self = this;
+
+            switch ( framework ){
+
+                case 'jasmine':
+
+                    // 执行用户的测试用例
+                    eval.call( WIN, code );
+
+                    // 启用Jasmine测试
+                    var jasmineEnv = jasmine.getEnv();
+                    jasmineEnv.updateInterval = 1000;
+                    var htmlReporter = new jasmine.JsonReporter(function (json) {
+                        document.title = JSON.stringify(json );
+                        self.done( json );
+                    });
+                    jasmineEnv.addReporter(htmlReporter);
+                    jasmine.getEnv().execute();
+
+                    break;
+
+                case 'mocha':
+                    break;
+                default:
+                    break;
+            }
         },
 
         /**
@@ -415,7 +512,6 @@
         _reportTestError: function( errData, next ){
             this._request( MSG_TYPE.TEST_ERROR, { errorInfo: errData }, function ( ret ) {
                 if ( ret.success ) {
-                    alert( 'server receive!' );
                 }
                 else {
                     alert( JSON.stringify( ret.err ) || '提交脚本错误失败!' );
