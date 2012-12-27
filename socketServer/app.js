@@ -4,7 +4,6 @@
 
 var express = require('express')
   , routes = require('./routes')
-  , user = require('./routes/user')
   , http = require('http')
   , path = require('path')
   , socketIo = require('socket.io');
@@ -32,7 +31,7 @@ app.configure('development', function(){
 
 app.get('/', routes.index);
 app.get('/simulate', routes.simulate);
-app.get('/users', user.list);
+app.get('/blank', routes.blank);
 app.get('/doc', routes.doc);
 
 // Express 3.x 的app将不再是一个httpServer instance，

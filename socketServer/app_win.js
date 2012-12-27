@@ -101,7 +101,6 @@ function openURL(url){
 function startSocket(){
     var express = require('express')
         , routes = require('./routes')
-        , user = require('./routes/user')
         , http = require('http')
         , path = require('path')
         , socketIo = require('socket.io');

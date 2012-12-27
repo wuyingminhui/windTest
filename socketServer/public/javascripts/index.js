@@ -45,7 +45,7 @@ $(document).ready(function(){
                         }
 
                         // 清空当前的数据
-                        $( '.J_TestResultTable tbody').append( HTML );
+                        $( '.J_TestResultTable tbody').html( HTML );
                     }
                     else {
                         new Error( ret.err );
