@@ -356,7 +356,7 @@
                     jasmineEnv.updateInterval = 1000;
                     var htmlReporter = new jasmine.JsonReporter(function (json) {
                         document.title = JSON.stringify(json );
-                        self.done(json);
+                        self.done( json );
                     });
                     jasmineEnv.addReporter(htmlReporter);
                     jasmine.getEnv().execute();
