@@ -1,5 +1,5 @@
 /**
- * UITest Client Library.
+ * Test Client Library.
  */
 
 ;(function(){

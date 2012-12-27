@@ -57,9 +57,23 @@ $(document).ready(function(){
         });
     });
     function renderHTML (resultJSON) {
+        var browserName = '';
+        if($.browser.safari){
+            browserName = 'safari';
+        }else if($.browser.msie){
+            browserName = 'msie';
+        }else if($.browser.chrome){
+            browserName = 'chrome';
+        }else if($.browser.safari){
+            browserName = 'safari';
+        }else if($.browser.mozilla){
+            browserName = 'mozilla';
+        }else{
+            browserName = 'noset';
+        }
         resultJSON = {
-            browser: 'test1',
-            version: 'test_version',
+            browser: browserName,
+            version: $.browser.version,
             reports: JSON.parse(resultJSON)
         };
 
