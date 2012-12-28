@@ -9,6 +9,14 @@
         return ;
     }
 
+
+    /**
+     */
+    var waitsMatchers = function (matchersFunc, timeout) {
+        return jasmine.getEnv().currentSpec.waitsMatchers(matchersFunc, timeout);
+    };
+    window.waitsMatchers = waitsMatchers;
+
     /**
      * @param mathersFunc
      * @return {Matcher}
@@ -27,13 +35,141 @@
         return this;
     };
 
-    /**
-     */
-    var waitsMatchers = function (matchersFunc, timeout) {
-        return jasmine.getEnv().currentSpec.waitsMatchers(matchersFunc, timeout);
+    jasmine.Matchers.matcherFn_ = function (matcherName, matcherFunction) {
+        return function () {
+
+            var args = arguments;
+            var matcherArgs = jasmine.util.argsToArray(arguments);
+            var result = matcherFunction.apply(this, arguments);
+
+            if (this.isNot) {
+                result = !result;
+            }
+
+            if (this.reportWasCalled_) return result;
+
+            var message;
+            if (!result) {
+                if (this.message) {
+                    message = this.message.apply(this, arguments);
+                    if (jasmine.isArray_(message)) {
+                        message = message[this.isNot ? 1 : 0];
+                    }
+                } else {
+                    var englishyPredicate = matcherName.replace(/[A-Z]/g, function (s) {
+                        return ' ' + s.toLowerCase();
+                    });
+                    message = "Expected " + jasmine.pp(this.actual) + (this.isNot ? " not " : " ") + englishyPredicate;
+                    if (matcherArgs.length > 0) {
+                        for (var i = 0; i < matcherArgs.length; i++) {
+                            if (i > 0) message += ",";
+                            message += " " + jasmine.pp(matcherArgs[i]);
+                        }
+                    }
+                    message += ".";
+                }
+            }
+            var expectationResult = new jasmine.ExpectationResult({
+                matcherName:matcherName,
+                passed:result,
+                expected:matcherArgs.length > 1 ? matcherArgs : matcherArgs[0],
+                actual:this.actual,
+                message:message
+            });
+            if (jasmine.Spec._waitsMatchers) {
+                jasmine.Spec._waitsMatchers.messageArray.push(expectationResult);
+            }
+            else {
+
+                this.spec.addMatcherResult(expectationResult);
+            }
+
+            return jasmine.undefined;
+
+
+        }
+
+
     };
-    if (isCommonJS) exports.waitsMatchers = waitsMatchers;
-    window.waitsMathers = waitsMatchers;
+
+    ///
+    jasmine.WaitsForMatchers = function (env, timeout, latchFunction, spec) {
+        var host = this;
+        this.timeout = timeout || env.defaultTimeoutInterval;
+        this.messageArray = [];
+        this.resultArray = [];
+        this.latchFunction = function () {
+
+            jasmine.Spec._waitsMatchers = host;
+            latchFunction.apply(host);
+            jasmine.Spec._waitsMatchers = false;
+
+        };
+        this.totalTimeSpentWaitingForLatch = 0;
+        jasmine.Block.call(this, env, null, spec);
+    };
+    jasmine.util.inherit(jasmine.WaitsForMatchers, jasmine.Block);
+
+    jasmine.WaitsForMatchers.TIMEOUT_INCREMENT = 10;
+
+    jasmine.WaitsForMatchers.prototype.execute = function (onComplete) {
+        if (jasmine.VERBOSE) {
+            this.env.reporter.log('>> Jasmine waiting for ' + (this.message || 'something to happen'));
+        }
+        ;
+
+        var latchFunctionResult;
+        try {
+
+
+            this.messageArray = [];
+            this.latchFunction.apply(this.spec);
+
+            if (this.messageArray.length == 0) {
+                latchFunctionResult = true;
+            } else {
+                var tempResult = true;
+
+                for (var p in this.messageArray) {
+                    if (!this.messageArray[p].passed_) {
+                        tempResult = false;
+                        break;
+                    }
+                }
+                latchFunctionResult = tempResult;
+
+            }
+
+        } catch (e) {
+            this.spec.fail(e);
+            onComplete();
+            return;
+        }
+
+        if (latchFunctionResult) {
+
+            for (var p in this.messageArray) {
+
+                this.spec.addMatcherResult(this.messageArray[p]);
+            }
+            onComplete();
+        } else if (this.totalTimeSpentWaitingForLatch >= this.timeout) {
+            for (var p in this.messageArray) {
+                //report
+                this.spec.addMatcherResult(this.messageArray[p]);
+            }
+
+            this.abort = true;
+            onComplete();
+        } else {
+            this.totalTimeSpentWaitingForLatch += jasmine.WaitsForBlock.TIMEOUT_INCREMENT;
+            var self = this;
+            this.env.setTimeout(function () {
+                self.execute(onComplete);
+            }, jasmine.WaitsForBlock.TIMEOUT_INCREMENT);
+        }
+    };
+
 })();
 
 /*整合cloudyRun 功能
