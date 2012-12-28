@@ -40,8 +40,7 @@ $(document).ready(function(){
                         for( index = 0; value = testResult[ index]; index++ ){
                             winId = value[ 'winId' ];
                             result = value[ 'testResult' ];
-
-                            HTML += '<tr><td>' + winId + '</td><td>' + result + '</td></tr>';
+                            HTML += '<tr><td>' + winId + '</td><td class="result-report">' + renderHTML(result) + '</td></tr>';
                         }
 
                         // 清空当前的数据
@@ -57,4 +56,60 @@ $(document).ready(function(){
             }
         });
     });
+    function renderHTML (resultJSON) {
+        var browserName = '';
+        if($.browser.safari){
+            browserName = 'safari';
+        }else if($.browser.msie){
+            browserName = 'msie';
+        }else if($.browser.chrome){
+            browserName = 'chrome';
+        }else if($.browser.safari){
+            browserName = 'safari';
+        }else if($.browser.mozilla){
+            browserName = 'mozilla';
+        }else{
+            browserName = 'noset';
+        }
+        resultJSON = {
+            browser: browserName,
+            version: $.browser.version,
+            reports: JSON.parse(resultJSON)
+        };
+
+        var template =
+            '<div class="browser">${browser} ${version}</div>' +
+                '<div class="title {{if reports.failedSpecs !== 0}}fail-alert{{else}}passed-alert{{/if}}"><span>用例总数:${reports.totalSpecs} | 失败用例总数:${reports.failedSpecs}</span></div>' +
+                '<div class="detail">{{each(index,suite) reports.suites}}' +
+                '<div class="suite">' +
+                '<span class="suite-title">${suite.description}</span>' +
+                '{{each(index, spec) suite.specs}}' +
+                '<div class="spec {{if spec.failed == true}}failed{{#else}}passed{{/if}}">' +
+                '<a class="spec-title" href="#">${spec.description}</a>' +
+                '<div class="detail">' +
+                '{{each(index, result) spec.results_}}' +
+                '{{each(index, item) result.items_}}' +
+                '<p>' +
+                'expect ${item.actual} ${item.matcherName} ' +
+                '{{if item.expected !== ""}}${item.expected}{{/if}}' +
+                '{{if item.passed_ == true}}' +
+                '\t: ${item.message}{{else}}\t: Failed.' +
+                '<div class="error-stack">${item.trace.stack}</div>' +
+                '{{/if}}' +
+                '</p>' +
+                '{{/each}}' +
+                '{{/each}}' +
+                '</div>' +
+                '</div>' +
+                '{{/each}}' +
+                '</div>' +
+                '{{/each}}' +
+                '</div>';
+        var frg = $('<div>');
+        jQuery.tmpl(template,resultJSON).appendTo(frg);
+        return  frg.html();
+
+
+    }
+
 });

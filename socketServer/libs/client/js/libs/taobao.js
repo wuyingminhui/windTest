@@ -1,3 +1,41 @@
+/**
+ * jasmine 增加一些方法
+ * 不在jasmine源代码中增加  为了方便jasmine升级
+ */
+;(function(){
+    debugger;
+
+    if (typeof(jasmine) == 'undefined') {
+        return ;
+    }
+
+    /**
+     * @param mathersFunc
+     * @return {Matcher}
+     */
+    jasmine.Spec.prototype.waitsMatchers = function (mathersFunc, timeout) {
+        var host = this;
+        if (!(mathersFunc && mathersFunc.apply)) {
+            throw new Error("");
+        }
+
+        var waitsFunc = new jasmine.WaitsForMatchers(this.env, timeout, mathersFunc, this);
+
+        this.addToQueue(waitsFunc);
+
+
+        return this;
+    };
+
+    /**
+     */
+    var waitsMatchers = function (matchersFunc, timeout) {
+        return jasmine.getEnv().currentSpec.waitsMatchers(matchersFunc, timeout);
+    };
+    if (isCommonJS) exports.waitsMatchers = waitsMatchers;
+    window.waitsMathers = waitsMatchers;
+})();
+
 /*整合cloudyRun 功能
  * @origin  https://github.com/sorrycc/cloudyrun/tree/master/src/public/jasmine
  */
