@@ -9,6 +9,7 @@
     
 var Path = require( 'path' );
 var ChildProcess = require( 'child_process');
+var StartWeb = require( './utils/start_web' );
 var Color = require( './utils/color').color;
 var Args = process.argv.splice( 1 );
 
@@ -105,7 +106,10 @@ function StartServer(){
         DEBUG_MOD && console.log( '[' + Color( 'INFO', 'light_green' ) + ']', data);
 
         if( data.indexOf( 'Express server listening on port' ) >= 0 ){
-            console.log( '[' + Color( 'INFO', 'light_green' ) + ']', 'Socket server has been started successfully.' );
+            console.log( '[' + Color( 'INFO', 'light_green' ) + ']', 'Socket server has been started successfully. Opening... ' );
+            console.log( '[' + Color( 'INFO', 'light_green' ) + ']', data );
+            var port = /Express\sserver\slistening\son\sport\s(\d+)/.exec( data )[1];
+            StartWeb( 'http://localhost:' + port + '/' );
         }
     });
 
