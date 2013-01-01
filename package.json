@@ -9,6 +9,7 @@
         "webdriverNode": "0.0.12",
         "socket.io": "*",
         "uglify-js": "1.x",
-        "ps-node": "*"
+        "ps-node": "*",
+        "getip": "*"
     }
 }

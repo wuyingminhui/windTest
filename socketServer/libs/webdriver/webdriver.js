@@ -6,6 +6,7 @@ var WD = require( 'webdriverNode' );
 var TestSession = require( '../redis/session' );
 var ClientCodeWrap = require( './clientCodeWrap' );
 var Compress = require( './compress' );
+var GetIP = require( 'getip' );
 
 /**
  * 用于储存运行中的Client
@@ -148,9 +149,13 @@ module.exports = {
 
             client.openWindow( url, function( ret ){
                 obj.winId = ret.value;
-                client.executeAsync( ClientCodeWrap, [ obj ], function(){
-                    next( ret.value );
-                });
+                // 获取本地ip
+                GetIP.getNetworkIPs(function( err, ips ){
+                    obj.ip = ips[0];
+                    client.executeAsync( ClientCodeWrap, [ obj ], function(){
+                        next( ret.value );
+                    });
+                })
             });
         }
         else {

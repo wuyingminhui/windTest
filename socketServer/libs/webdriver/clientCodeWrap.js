@@ -41,7 +41,7 @@ module.exports = function( args, done ){
         libs: args.libs,
 
         // 服务器 host
-        server: 'http://localhost:3000'
+        server: 'http://' + ( args.ip || 'localhost' ) + ':' + ( args.port || 3000 )
 
     };
 
