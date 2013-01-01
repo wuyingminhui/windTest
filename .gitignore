@@ -6,3 +6,6 @@
 *.iml
 *.ipr
 **/node_modules
+*.rdb
+*.log
+*.iws

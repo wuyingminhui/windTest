@@ -10,6 +10,5 @@ if( Platform === 'win32' ){
 }
 // 其他系统
 else {
-    console.log( Path.resolve( __dirname, './run.mac.js' ) );
     ChildProcess.fork( Path.resolve( __dirname, './run.mac.js' ) );
 }
