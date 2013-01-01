@@ -9,3 +9,4 @@
 *.rdb
 *.log
 *.iws
+node_modules/*
