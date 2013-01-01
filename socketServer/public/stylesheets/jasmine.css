@@ -80,7 +80,7 @@
 #TrivialReporter #jasmine_content { position: fixed; right: 100%; }
 #TrivialReporter .runner { border: 1px solid gray; display: block; margin: 5px 0; padding: 2px 0 2px 10px; }
 
-.result-report * {
+.result-report {
 font-size: 12px;
 font-family: Monaco, "Lucida Console", monospace;
 line-height: 14px;
@@ -126,4 +126,39 @@ margin-left: 20px;
 padding: 15px;
 background-color: #fff;
 border: 1px solid #d2d3d4;
+}
+
+/* 测试脚本出错时 */
+.test-error {
+    margin-top: 10px;
+    float: left;
+    background: #DAB420;
+    padding: 5px;
+    color: white;
+}
+.test-error-info {
+    padding-top: 10px;
+    margin-top: 10px;
+    clear: left;
+    float: left;
+    border-top: 1px solid #eee;
+    background: #eee;
+    padding: 10px;
+}
+.test-error-info ul, .test-error-info li {
+    list-style: none;
+    margin-left: 15px;
+}
+
+.error-list p {
+    margin-top: 5px;
+}
+.error-stacks ul li {
+    color: #999;
+}
+.error-list p, .error-list li {
+    color: #999;
+}
+.error-list .error-msg span {
+    color: red;
 }

@@ -22,6 +22,17 @@ var TestFinishCallback = {};
 var AllTestFinishCallback = {};
 
 /**
+ * 用于保存会话超时的Timer
+ */
+var SessionTimeoutCallback = {};
+
+/**
+ * 会话超时时间，默认为1分钟
+ * @type {number}
+ */
+var SESSION_TIMEOUT = 60 * 1000;
+
+/**
  * Socket API
  * @type {Object}
  */
@@ -38,6 +49,10 @@ var SOCKET_API = {
      */
 
     NEW_TEST: function( testData, next ){
+
+        // 是否为第一次启动
+        var ifNewSession = !testData.sessionId;
+
         Test.newTest( testData, function( err, result ){
             if( err ){
                 next({
@@ -49,7 +64,35 @@ var SOCKET_API = {
                 next({
                     success: true,
                     data: result
-                })
+                });
+
+                if( ifNewSession ){
+
+                    // 设置超时
+                    var sessionId = result.sessionId;
+
+                    SessionTimeoutCallback[ sessionId ] = setTimeout(function(){
+
+                        Test.timeout( sessionId, function( err, ret ){
+
+                            SessionTimeoutCallback[ result.sessionId ] = null;
+
+                            if( err ){
+                                new Error( err );
+                            }
+                            else {
+
+                                var callback = AllTestFinishCallback[ sessionId ];
+                                if( typeof callback == 'function' ){
+                                    callback({
+                                        success: true,
+                                        data: ret.allResult
+                                    });
+                                }
+                            }
+                        });
+                    }, SESSION_TIMEOUT );
+                }
             }
         });
     },
@@ -65,45 +108,49 @@ var SOCKET_API = {
 
     TEST_FINISH: function( info ){
 
-        Test.finish( info, function( err, ret ){
+            Test.finish( info, function( err, ret ){
 
-            // todo handle这块的异常
-            if( err ){
-                new Error( err );
-            }
-            else {
-                var sessionId = ret.sessionId;
-                var callback;
+                if( err ){
+                    new Error( err );
+                }
+                else {
+                    var sessionId = ret.sessionId;
+                    var callback;
 
-                // 检查是否所有测试都结束了，否则通知其父页面
-                if( !ret.ifAllFinish ){
-                    // 通知parent window
-                    var winId = ret.winId;
+                    // 检查是否所有测试都结束了，否则通知其父页面
+                    if( !ret.ifAllFinish ){
+                        // 通知parent window
+                        var winId = ret.winId;
 
-                    if( TestFinishCallback[ sessionId ] ){
-                        callback = TestFinishCallback[ sessionId ][ winId ];
+                        if( TestFinishCallback[ sessionId ] ){
+                            callback = TestFinishCallback[ sessionId ][ winId ];
+                            if( typeof callback == 'function' ){
+                                callback( {
+                                    success: true,
+                                    data: ret
+                                });
+                                delete TestFinishCallback[ sessionId ][ winId ];
+                            }
+                        }
+                    }
+
+                    // 若所有测试完毕
+                    else {
+
+                        // 清除超时
+                        clearTimeout( SessionTimeoutCallback[ sessionId ] );
+                        SessionTimeoutCallback[ sessionId ] = null;
+
+                        callback = AllTestFinishCallback[ sessionId ];
                         if( typeof callback == 'function' ){
-                            callback( {
+                            callback({
                                 success: true,
-                                data: ret
+                                data: ret.allResult
                             });
-                            delete TestFinishCallback[ sessionId ][ winId ];
                         }
                     }
                 }
-
-                // 若所有测试完毕
-                else {
-                    callback = AllTestFinishCallback[ sessionId ];
-                    if( typeof callback == 'function' ){
-                        callback({
-                            success: true,
-                            data: ret.allResult
-                        });
-                    }
-                }
-            }
-        });
+            });
     },
 
     /**

@@ -44,7 +44,7 @@ module.exports = {
                         }
                         else {
                             // addWin
-                            S.addWin( winId, { parentId: testInfo.winId, stat: 'running' }, function( err ){
+                            S.addWin( winId, { parentId: testInfo.winId, stat: 'running', url: config.url }, function( err ){
 
                                 if( err ){
                                     next( err );
@@ -236,6 +236,61 @@ module.exports = {
     },
 
     /**
+     * 当一次窗口的超时
+     * @param {String} sessionId
+     * @param {Function} next callback
+     * @param {Object=null} next.err
+     * @param {Object} next.result 窗口测试的结果描述
+     * @param {String} next.result.sessionId
+     * @param {String} next.result.winId
+     * @param {Boolean} next.result.ifAllFinish 是否本次会话都结束了
+     * @param {Object} next.result.errorList 当前结束窗口的测试结果
+     * @param {Object[]} next.result.allResult 本次会话的所有测试结果
+     */
+
+    timeout: function( sessionId, next ){
+
+        console.log( 'In Timeout: ', sessionId );
+        // 获取测试相关信息
+        var self = this;
+
+        new TestSession( sessionId, function( err, S ){
+
+            if( err ){
+                next( err );
+            }
+            else {
+
+                // 获取所有的测试结果
+                self.getAllTestResult( sessionId, function( err, resultList ){
+
+                    if( err ){
+                        next( err );
+                    }
+                    else {
+                        TestDriver.finishSession( sessionId, function( err ){
+
+                            if( err ){
+                                next( err );
+                            }
+                            else {
+                                next( null, {
+                                    sessionId: sessionId,
+                                    ifAllFinish: true,
+                                    allResult: resultList
+                                });
+                            }
+
+                            // 销毁session数据
+                            S.destroy();
+                        } );
+                    }
+                });
+            }
+        });
+    },
+
+    /**
      * 获取全局数据
      * @param sessionId
      * @param {Function} next callback
@@ -313,12 +368,29 @@ module.exports = {
                 next( err );
             }
             else {
-                S.addError( winId, errorInfo, function( err ){
+                S.getWin( winId, function( err, winObj ){
                     if( err ){
                         next( err );
                     }
                     else {
-                        next( null );
+
+                        var errorList = winObj.errorList;
+                        if( !errorList ){
+                            errorList = winObj.errorList = [];
+                        }
+
+                        errorList.push( errorInfo );
+
+                        // 保存
+                        S.setWin( winId, winObj, function( err ){
+
+                            if( err ){
+                                next( err );
+                            }
+                            else {
+                                next( null );
+                            }
+                        });
                     }
                 });
             }

@@ -35,12 +35,16 @@ $(document).ready(function(){
                             , value
                             , winId
                             , result
+                            , url
+                            , errorList
                             , HTML = '';
 
                         for( index = 0; value = testResult[ index]; index++ ){
                             winId = value[ 'winId' ];
                             result = value[ 'testResult' ];
-                            HTML += '<tr><td>' + winId + '</td><td class="result-report">' + renderHTML(result) + '</td></tr>';
+                            errorList = value[ 'errorList' ];
+                            url = value[ 'url' ];
+                            HTML += '<tr><td>' + winId + '</td><td class="result-report">' + renderHTML( url, result, errorList ) + '</td></tr>';
                         }
 
                         // 清空当前的数据
@@ -56,7 +60,8 @@ $(document).ready(function(){
             }
         });
     });
-    function renderHTML (resultJSON) {
+    function renderHTML ( url, resultJSON, errorList ) {
+
         var browserName = '';
         if($.browser.safari){
             browserName = 'safari';
@@ -74,37 +79,71 @@ $(document).ready(function(){
         resultJSON = {
             browser: browserName,
             version: $.browser.version,
-            reports: JSON.parse(resultJSON)
+            reports: JSON.parse(resultJSON || null),
+            errorList: JSON.parse( errorList || null ),
+            url: url
         };
 
         var template =
-            '<div class="browser">${browser} ${version}</div>' +
-                '<div class="title {{if reports.failedSpecs !== 0}}fail-alert{{else}}passed-alert{{/if}}"><span>用例总数:${reports.totalSpecs} | 失败用例总数:${reports.failedSpecs}</span></div>' +
-                '<div class="detail">{{each(index,suite) reports.suites}}' +
-                '<div class="suite">' +
-                '<span class="suite-title">${suite.description}</span>' +
-                '{{each(index, spec) suite.specs}}' +
-                '<div class="spec {{if spec.failed == true}}failed{{#else}}passed{{/if}}">' +
-                '<a class="spec-title" href="#">${spec.description}</a>' +
-                '<div class="detail">' +
-                '{{each(index, result) spec.results_}}' +
-                '{{each(index, item) result.items_}}' +
-                '<p>' +
-                'expect ${item.actual} ${item.matcherName} ' +
-                '{{if item.expected !== ""}}${item.expected}{{/if}}' +
-                '{{if item.passed_ == true}}' +
-                '\t: ${item.message}{{else}}\t: Failed.' +
-                '<div class="error-stack">${item.trace.stack}</div>' +
+            '<div class="browser">${browser} ${version} {{if url}}in <a href="${url}" target="_blank">${url}</a>{{/if}}</div>' +
+                '{{if reports}}' +
+                    '<div class="title {{if reports.failedSpecs !== 0}}fail-alert{{else}}passed-alert{{/if}}">' +
+                        '<span>用例总数:${reports.totalSpecs} | 失败用例总数:${reports.failedSpecs}</span>' +
+                    '</div>' +
+                    '<div class="detail">' +
+                    '{{each(index,suite) reports.suites}}' +
+                        '<div class="suite">' +
+                            '<span class="suite-title">${suite.description}</span>' +
+                            '{{each(index, spec) suite.specs}}' +
+                                '<div class="spec {{if spec.failed == true}}failed{{#else}}passed{{/if}}">' +
+                                    '<p class="spec-title">${spec.description}</p>' +
+                                    '<div class="detail">' +
+                                    '{{each(index, result) spec.results_}}' +
+                                        '{{each(index, item) result.items_}}' +
+                                            '<p>' +
+                                            'expect ${item.actual} ${item.matcherName} ' +
+                                            '{{if item.expected !== ""}}${item.expected}{{/if}}' +
+                                            '{{if item.passed_ == true}}' +
+                                            '\t: ${item.message}' +
+                                            '{{else}}\t: Failed.' +
+                                            '<div class="error-stack">${item.trace.stack}</div>' +
+                                            '{{/if}}' +
+                                            '</p>' +
+                                        '{{/each}}' +
+                                    '{{/each}}' +
+                                    '</div>' +
+                                '</div>' +
+                            '{{/each}}' +
+                        '</div>' +
+                    '{{/each}}' +
+                    '</div>' +
+                '{{else}}' +
+                    '<div class="test-error">' +
+                        '测试出错' +
+                    '</div>' +
                 '{{/if}}' +
-                '</p>' +
-                '{{/each}}' +
-                '{{/each}}' +
-                '</div>' +
-                '</div>' +
-                '{{/each}}' +
-                '</div>' +
-                '{{/each}}' +
-                '</div>';
+                '{{if errorList}}' +
+                    '<div class="test-error-info">错误信息:' +
+                        '<ul class="error-list">' +
+                        '{{each(index,error) errorList}}' +
+                            '<li>' +
+                                '<p class="error-msg">message: <span>${error.message}</span></p>' +
+                                '<p>url: ${error.url}</p>' +
+                                '<div class="error-stacks">' +
+                                    '<p>stacks:</p>' +
+                                    '<ul>' +
+                                    '{{each(index,stack) error.stack}}' +
+                                        '<li>${stack.url}\t${stack.func}\t${stack.line}</li>' +
+                                    '{{/each}}' +
+                                    '</ul>' +
+                                '</div>' +
+                            '</li>' +
+                        '{{/each}}' +
+                        '</ul>' +
+                    '</div>' +
+                '{{/if}}' +
+            '</div>';
+
         var frg = $('<div>');
         jQuery.tmpl(template,resultJSON).appendTo(frg);
         return  frg.html();

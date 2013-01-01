@@ -1,3 +1,7 @@
+/**
+ * Open web page.
+ */
+
 var ChildProcess = require( 'child_process' );
 
 module.exports = function (url) {

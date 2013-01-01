@@ -314,6 +314,12 @@
                     console.log.apply( console, arguments );
                 }
             }
+
+            function indent(text){
+                return text.split('\n').map(function(line){
+                    return '    ' + line
+                }).join('\n')
+            }
         },
 
         /**
@@ -509,6 +515,7 @@
          */
 
         _reportTestError: function( errData, next ){
+            alert( 'error' + JSON.stringify( errData ) );
             this._request( MSG_TYPE.TEST_ERROR, { errorInfo: errData }, function ( ret ) {
                 if ( ret.success ) {
                 }
