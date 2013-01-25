@@ -7,6 +7,7 @@ var TestSession = require( '../redis/session' );
 var ClientCodeWrap = require( './clientCodeWrap' );
 var Compress = require( './compress' );
 var GetIP = require( 'getip' );
+var ClientManager = require( './clientManager' );
 
 /**
  * 用于储存运行中的Client
@@ -99,7 +100,8 @@ module.exports = {
     /**
      * 创建一个新的会话
      * @param {Object} info 测试相关的信息
-     * @param {String} info.browserName 测试相关的信息
+     * @param {String} info.browserName 浏览器名称
+     * @param {String} [info.version] 浏览器版本
      * @param {Function} next callback
      * @param {Client} next.client 创建的client实例对象
      * @param {String} next.sessionId 新创建的会话Id
@@ -107,16 +109,17 @@ module.exports = {
      */
 
     _newSession: function(info, next){
-
+        var clientHost = ClientManager.getClientHost( info.browserName, info.version );
         var client = WD.remote({
             desiredCapabilities: {
                 browserName: info.browserName
-            }
+            },
+            host: clientHost || undefined
         });
 
         client.init(function( ret ){
             var sessionId = ret.value;
-            next( client, sessionId );
+            next( client, sessionId, clientHost );
         });
     },
 
@@ -234,6 +237,9 @@ module.exports = {
 
                     // 释放
                     delete SessionClientList[ sessionId ];
+
+                    // 获取client的host，释放host的计数
+                    ClientManager.releaseClient( client.toJSON().host );
                 }
                 else {
                     next( null );

@@ -16,6 +16,8 @@ var Args = process.argv.splice( 1 );
 
 // 是否启动了DEGUB模式
 var DEBUG_MOD = Args.join( ' ' ).indexOf( '--debug' ) >= 0;
+// 是否只需要启动Selenium
+var SELENIUM_ONLY = Args.join( ' ' ).indexOf( '--selenium' ) >= 0;
 
 var CONFIG = {
     // Chrome driver
@@ -32,9 +34,14 @@ var RedisExec;
 var SeleniumExec;
 var SocketExec;
 
-StartRedis();
-StartSelenium();
-StartServer();
+if( SELENIUM_ONLY ){
+    StartSelenium();
+}
+else {
+    StartSelenium();
+    StartRedis();
+    StartServer();
+}
 
 function checkAllKilled(){
     if( !RedisExec && !SeleniumExec && !SocketExec ){
@@ -182,7 +189,7 @@ process.stdin.on( 'data', function (chunk) {
             });
         }
         else {
-            RedisExec.kill();
+            RedisExec && RedisExec.kill();
         }
 
         if( typeof SeleniumExec == 'string' ){
@@ -198,7 +205,7 @@ process.stdin.on( 'data', function (chunk) {
             });
         }
         else {
-            SeleniumExec.kill();
+            SeleniumExec && SeleniumExec.kill();
         }
 
         if( typeof SocketExec == 'string' ){
@@ -214,7 +221,7 @@ process.stdin.on( 'data', function (chunk) {
             });
         }
         else {
-            SocketExec.kill();
+            SocketExec && SocketExec.kill();
         }
     }
 });
