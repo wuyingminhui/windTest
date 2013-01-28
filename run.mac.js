@@ -115,7 +115,6 @@ function StartRedis( next ){
             var setupCommand = [
                 CONFIG.REDIS_SERVER_PATH
             ];
-            console.log( 'REDIS: ', setupCommand.join( ' ' ) );
             var exec = ChildProcess.exec( setupCommand.join( ' ' ) );
 
             exec.stdout.on( 'data', function (data) {
