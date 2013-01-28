@@ -7,13 +7,19 @@
 
 
 var path = require('path');
-
-
 var CONFIG = {
     "CHROME_DRIVER_PATH": "../Selenium/chromedriver",
     "SELENIUM_SERVER_JAR_PATH": "../Selenium/selenium-server-standalone-2.24.1.jar",
     "REDIS_SERVER_PATH": "../Redis/windows/redis-server.exe"
 };
+
+var Args = process.argv.splice( 1 );
+
+// 是否启动了DEGUB模式
+var DEBUG_MOD = Args.join( ' ' ).indexOf( '--debug' ) >= 0;
+// 是否只需要启动Selenium
+var SELENIUM_ONLY = Args.join( ' ' ).indexOf( '--selenium' ) >= 0;
+
 /**
  * 执行操作系统命令
  * @param {String} command
@@ -152,7 +158,10 @@ function startSocket(){
 
 //启动服务
 startSelenium(function(){
-    startRedis(function(){
-        startSocket();
-    });
+
+    if( !SELENIUM_ONLY ){
+        startRedis(function(){
+            startSocket();
+        });
+    }
 });

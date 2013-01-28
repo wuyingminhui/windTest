@@ -12,7 +12,10 @@ var ChildProcess = require( 'child_process');
 var PS = require( 'ps-node' );
 var StartWeb = require( './utils/start_web' );
 var Color = require( './utils/color').color;
+var Platform = process.platform;
 var Args = process.argv.splice( 1 );
+
+var IF_WIN = ( Platform == 'win32' );
 
 // 是否启动了DEGUB模式
 var DEBUG_MOD = Args.join( ' ' ).indexOf( '--debug' ) >= 0;
@@ -21,11 +24,11 @@ var SELENIUM_ONLY = Args.join( ' ' ).indexOf( '--selenium' ) >= 0;
 
 var CONFIG = {
     // Chrome driver
-    'CHROME_DRIVER_PATH': Path.resolve( __dirname, './Selenium/chromedriver' ),
+    'CHROME_DRIVER_PATH': Path.resolve( __dirname, './Selenium/chromedriver' ) + ( IF_WIN ? '.exe' : '' ),
     // Selenium
     'SELENIUM_SERVER_JAR_PATH': Path.resolve( __dirname, './Selenium/selenium-server-standalone-2.24.1.jar' ),
     // Redis
-    'REDIS_SERVER_PATH': Path.resolve( __dirname, './Redis/mac_linux/src/redis-server' ),
+    'REDIS_SERVER_PATH': ( IF_WIN ? Path.resolve( __dirname, './Redis/windows/redis-server.exe' ) : Path.resolve( __dirname, './Redis/mac_linux/src/redis-server' ) ),
     // Socket Server
     'SOCKET_SERVER_PATH': Path.resolve( __dirname, './socketServer/app.js' )
 };
@@ -52,7 +55,7 @@ function checkAllKilled(){
 function StartSelenium( successFun ){
 
     // 先检查Selenium是否已经启动过了
-    PS.lookup( { command: 'java', arguments: 'selenium' }, function( err, resultList ){
+    PS.lookup( { command: '.*java.*', arguments: '.*selenium.*' }, function( err, resultList ){
 
         if( resultList && resultList.length > 0 ){
             SeleniumExec = resultList[ 0 ].pid;
@@ -93,7 +96,7 @@ function StartSelenium( successFun ){
 function StartRedis(){
 
     // 先检查Redis是否已经启动过了
-    PS.lookup( { command: 'redis-server' }, function( err, resultList ){
+    PS.lookup( { command: '.*redis-server.*' }, function( err, resultList ){
 
         if( resultList && resultList.length > 0 ){
             RedisExec = resultList[ 0 ].pid;
@@ -103,7 +106,7 @@ function StartRedis(){
             var setupCommand = [
                 CONFIG.REDIS_SERVER_PATH
             ];
-
+            console.log( 'REDIS: ', setupCommand.join( ' ' ) );
             var exec = ChildProcess.exec( setupCommand.join( ' ' ) );
 
             exec.stdout.on( 'data', function (data) {
