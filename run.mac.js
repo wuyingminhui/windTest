@@ -41,18 +41,21 @@ if( SELENIUM_ONLY ){
     StartSelenium();
 }
 else {
-    StartSelenium();
-    StartRedis();
-    StartServer();
+    StartRedis(function(){
+        StartSelenium(function(){
+            StartServer();
+        });
+    });
 }
 
 function checkAllKilled(){
     if( !RedisExec && !SeleniumExec && !SocketExec ){
+        console.log( '[' + Color( 'EXIT', 'light_yellow' ) + ']', 'All services are killed!' );
         process.exit(1);
     }
 }
 
-function StartSelenium( successFun ){
+function StartSelenium( next ){
 
     // 先检查Selenium是否已经启动过了
     PS.lookup( { command: '.*java.*', arguments: '.*selenium.*' }, function( err, resultList ){
@@ -60,6 +63,7 @@ function StartSelenium( successFun ){
         if( resultList && resultList.length > 0 ){
             SeleniumExec = resultList[ 0 ].pid;
             console.log( '[' + Color( 'INFO', 'light_green' ) + ']', 'Selenium Server is already running.' );
+            next && next();
         }
         else {
             var SeleniumSetupCommand = [
@@ -68,6 +72,7 @@ function StartSelenium( successFun ){
                 CONFIG.SELENIUM_SERVER_JAR_PATH,
                 '-Dwebdriver.chrome.driver=' + CONFIG.CHROME_DRIVER_PATH
             ];
+
             var exec = ChildProcess.exec( SeleniumSetupCommand.join( ' ' ) );
 
             exec.stdout.on( 'data', function (data) {
@@ -75,11 +80,13 @@ function StartSelenium( successFun ){
 
                 if( data.indexOf( 'tarted org.openqa.jetty.jetty.Server' ) >= 0 ){
                     console.log( '[' + Color( 'INFO', 'light_green' ) + ']', 'Selenium Server has been started successfully.' );
+                    next && next();
                 }
             });
 
             exec.stderr.on('error', function (data) {
                 console.log('[' + Color( 'ERROR', 'light_red' ) + ']', data);
+                next && next();
             });
 
             exec.on('exit', function (code) {
@@ -93,14 +100,16 @@ function StartSelenium( successFun ){
     });
 }
 
-function StartRedis(){
+function StartRedis( next ){
 
     // 先检查Redis是否已经启动过了
-    PS.lookup( { command: '.*redis-server.*' }, function( err, resultList ){
 
+    PS.lookup( { command: '.*redis-server.*' }, function( err, resultList ){
         if( resultList && resultList.length > 0 ){
+
             RedisExec = resultList[ 0 ].pid;
             console.log( '[' + Color( 'INFO', 'light_green' ) + ']', 'Redis Server is already running.' );
+            next && next();
         }
         else {
             var setupCommand = [
@@ -115,11 +124,13 @@ function StartRedis(){
 
                 if( data.indexOf( 'The server is now ready to accept connections on port' ) >= 0 ){
                     console.log( '[' + Color( 'INFO', 'light_green' ) + ']', 'Redis server has been started successfully.' );
+                    next && next();
                 }
             });
 
             exec.stderr.on('error', function (data) {
                 console.log('[' + Color( 'ERROR', 'light_red' ) + ']', data);
+                next && next();
             });
 
             exec.on('exit', function (code) {
@@ -133,7 +144,7 @@ function StartRedis(){
     });
 }
 
-function StartServer(){
+function StartServer( next ){
 
     // 先检查Selenium是否已经启动过了
     PS.lookup( { command: 'node', arguments: 'socketServer/app.js' }, function( err, resultList ){
@@ -141,6 +152,7 @@ function StartServer(){
         if( resultList && resultList.length > 0 ){
             SocketExec = resultList[ 0 ].pid;
             console.log( '[' + Color( 'INFO', 'light_green' ) + ']', 'Socket Server is already running.' );
+            next && next();
         }
         else {
             var exec = ChildProcess.exec( 'node ' + CONFIG.SOCKET_SERVER_PATH );
@@ -153,11 +165,13 @@ function StartServer(){
                     console.log( '[' + Color( 'INFO', 'light_green' ) + ']', data );
                     var port = /Express\sserver\slistening\son\sport\s(\d+)/.exec( data )[1];
                     StartWeb( 'http://localhost:' + port + '/' );
+                    next && next();
                 }
             });
 
             exec.stderr.on('error', function (data) {
                 console.log('[' + Color( 'ERROR', 'light_red' ) + ']', data);
+                next && next();
             });
 
             exec.on('exit', function (code) {
@@ -175,28 +189,28 @@ process.stdin.resume();
 process.stdin.setEncoding('utf8');
 
 process.stdin.on( 'data', function (chunk) {
-    if( chunk.substring( 0, chunk.length - 1 ) == 'close' ){
+
+    if( chunk.trim() == 'close' ){
 
         console.log( '[' + Color( 'INFO', 'light_green' ) + ']', 'Stop servers ...' );
 
-        if( typeof RedisExec == 'string' ){
-            PS.kill( RedisExec, function( err ){
-                RedisExec = null;
-                if( err ){
-                    console.log('[' + Color( 'ERROR', 'light_red' ) + ']', 'Killing Redis Server failed: ', err );
-                }
-                else {
-                    console.log( '[' + Color( 'EXIT', 'light_yellow' ) + ']', 'Redis server has been killed.' );
-                }
-                checkAllKilled();
-            });
-        }
-        else {
-            RedisExec && RedisExec.kill();
-        }
+        var redisPid = typeof RedisExec == 'string' ? RedisExec : RedisExec ? RedisExec.pid : undefined;
 
-        if( typeof SeleniumExec == 'string' ){
-            PS.kill( SeleniumExec, function( err ){
+        PS.kill( redisPid, function( err ){
+            RedisExec = null;
+            if( err ){
+                console.log('[' + Color( 'ERROR', 'light_red' ) + ']', 'Killing Redis Server failed: ', err );
+            }
+            else {
+                console.log( '[' + Color( 'EXIT', 'light_yellow' ) + ']', 'Redis server has been killed.' );
+            }
+            checkAllKilled();
+        });
+
+        var seleniumPid = typeof SeleniumExec == 'string' ? SeleniumExec : SeleniumExec ? SeleniumExec.pid : undefined;
+
+        setTimeout(function(){
+            PS.kill( seleniumPid, function( err ){
                 SeleniumExec = null;
                 if( err ){
                     console.log('[' + Color( 'ERROR', 'light_red' ) + ']', 'Killing Selenium Server failed: ', err );
@@ -206,13 +220,11 @@ process.stdin.on( 'data', function (chunk) {
                 }
                 checkAllKilled();
             });
-        }
-        else {
-            SeleniumExec && SeleniumExec.kill();
-        }
+        }, 500);
 
-        if( typeof SocketExec == 'string' ){
-            PS.kill( SocketExec, function( err ){
+        var socketPid = typeof SocketExec == 'string' ? SocketExec : SocketExec ? SocketExec.pid : undefined;
+        socketPid && setTimeout(function(){
+            PS.kill( socketPid, function( err ){
                 SocketExec = null;
                 if( err ){
                     console.log('[' + Color( 'ERROR', 'light_red' ) + ']', 'Killing Socket Server failed: ', err );
@@ -222,9 +234,6 @@ process.stdin.on( 'data', function (chunk) {
                 }
                 checkAllKilled();
             });
-        }
-        else {
-            SocketExec && SocketExec.kill();
-        }
+        }, 1000 );
     }
 });
